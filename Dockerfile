@@ -38,7 +38,12 @@ RUN PIP_INSTALL="python -m pip --no-cache-dir install" && \
 # See https://pytorch.org/ for other options if you use a different version of CUDA
 # RUN pip install --user torch==1.6 torchvision==0.7.0 -f https://download.pytorch.org/whl/cu102/torch_stable.html
 # RUN pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
-RUN pip install torch torchvision torchaudio
+
+# RUN pip install torch torchvision torchaudio
+
+# CUDA 11.7:
+RUN pip install torch==2.0.0 torchvision==0.15.1 torchaudio==2.0.1
+# pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
 
 # Install python packages
 RUN PIP_INSTALL="python -m pip --no-cache-dir install" && \
