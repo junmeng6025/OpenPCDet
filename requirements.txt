@@ -40,3 +40,6 @@ vtk==9.0.1
 pyqt5
 tensorboard
 open3d
+
+torch-cluster -f https://pytorch-geometric.com/whl/torch-2.0.1+cu117.html
+torch-scatter -f https://pytorch-geometric.com/whl/torch-2.0.1+cu117.html
