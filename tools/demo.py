@@ -65,9 +65,9 @@ def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--cfg_file', type=str, default='cfgs/kitti_models/second.yaml',
                         help='specify the config for demo')
-    parser.add_argument('--data_path', type=str, default='demo_data',
+    parser.add_argument('--data_path', type=str, default='../data/kitti/PointClouds/0000000060.bin',
                         help='specify the point cloud data file or directory')
-    parser.add_argument('--ckpt', type=str, default=None, help='specify the pretrained model')
+    parser.add_argument('--ckpt', type=str, default='../models/demo/pv_rcnn_8369.pth', help='specify the pretrained model')
     parser.add_argument('--ext', type=str, default='.bin', help='specify the extension of your point cloud data file')
 
     args = parser.parse_args()
@@ -80,7 +80,8 @@ def parse_config():
 def main():
     args, cfg = parse_config()
     logger = common_utils.create_logger()
-    logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
+    print("=> Starting demo... Using %s\n"%('open3d' if OPEN3D_FLAG else 'mayavi'))
+    logger.info('-----------------< Quick Demo of OpenPCDet >-------------------------')
     demo_dataset = DemoDataset(
         dataset_cfg=cfg.DATA_CONFIG, class_names=cfg.CLASS_NAMES, training=False,
         root_path=Path(args.data_path), ext=args.ext, logger=logger
