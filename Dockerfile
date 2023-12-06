@@ -78,7 +78,7 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     git
 
-# RUN git clone https://github.com/MarcBrede/OpenPCDet.git
+RUN git clone https://github.com/MarcBrede/OpenPCDet.git
 
 ENV PYTHONPATH /root/OpenPCDet/
 
