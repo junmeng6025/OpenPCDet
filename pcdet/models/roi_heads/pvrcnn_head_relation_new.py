@@ -1,10 +1,23 @@
 import torch.nn as nn
+import numpy as np
+import torch
 
+from copy import deepcopy
+from easydict import EasyDict as edict
+from scipy.spatial.transform import Rotation as R
 from ...ops.pointnet2.pointnet2_stack import pointnet2_modules as pointnet2_stack_modules
 from ...utils import common_utils
 from .roi_head_template import RoIHeadTemplate
-from pcdet.ops.roiaware_pool3d.roiaware_pool3d_utils import points_in_boxes_gpu
+from ...ops.roiaware_pool3d.roiaware_pool3d_utils import points_in_boxes_gpu
 
+INSTANCE_PROP = [ 
+    'cx', 'cy', 'cz', 'dx', 'dy', 'dz', 'heading_cos', 'heading_sin', 
+    'dist', 'alpha_cos', 'alpha_sin', 'nr_pts',
+    'min_x', 'min_y', 'min_z', 'min_refl',
+    'max_x', 'max_y', 'max_z', 'max_refl',
+    'mean_x', 'mean_y', 'mean_z', 'mean_refl',
+    'std_x', 'std_y', 'std_z', 'std_refl'
+]  # elongation only for Waymo
 
 class PVRCNNHeadRelation(RoIHeadTemplate):
     def __init__(self, input_channels, model_cfg, num_class=1, object_relation_config=None, **kwargs):
@@ -14,6 +27,8 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         self.roi_grid_pool_layer, num_c_out = pointnet2_stack_modules.build_local_aggregation_module(
             input_channels=input_channels, config=self.model_cfg.ROI_GRID_POOL
         )
+
+        self.ip_dict = edict({k: i for i, k in enumerate(INSTANCE_PROP)})
 
         GRID_SIZE = self.model_cfg.ROI_GRID_POOL.GRID_SIZE
         pre_channel = GRID_SIZE * GRID_SIZE * GRID_SIZE * num_c_out
@@ -90,14 +105,100 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
                     nn.init.constant_(m.bias, 0)
         nn.init.normal_(self.reg_layers[-1].weight, mean=0, std=0.001)
 
+    def extract_instance_properties(self, roi_boxes, pcl):
+        """
+        Args:
+           roi_boxes: tensor, (num_rois, 7)
+           pcl: tensor, (num_rawpts, 4)
+        Returns:
+
+        """
+        ipd = self.ip_dict
+        data = np.zeros((roi_boxes.shape[0], len(ipd)), dtype=np.float32)
+        roi_boxes = roi_boxes.cpu().numpy()
+        # pcl = pcl.cpu().numpy()
+
+        roi_boxes[:, 6] = np.mod(roi_boxes[:, 6], 2*np.pi)
+
+        data[:, ipd.cx] = roi_boxes[:, 0]
+        data[:, ipd.cy] = roi_boxes[:, 1]
+        data[:, ipd.cz] = roi_boxes[:, 2]
+        data[:, ipd.dx] = roi_boxes[:, 3]
+        data[:, ipd.dy] = roi_boxes[:, 4]
+        data[:, ipd.dz] = roi_boxes[:, 5]
+
+        data[:, ipd.heading_cos] = np.cos(roi_boxes[:, 6])
+        data[:, ipd.heading_sin] = np.sin(roi_boxes[:, 6])
+        
+        alpha = roi_boxes[:, 6] - np.arctan2(roi_boxes[:, 1], roi_boxes[:, 0])
+        data[:, ipd.alpha_cos] = np.cos(alpha)
+        data[:, ipd.alpha_sin] = np.sin(alpha)
+
+        data[:, ipd.dist] = np.linalg.norm(roi_boxes[:, :3], axis=1)
+
+        for i in range(roi_boxes.shape[0]):
+            box = deepcopy(roi_boxes[i, :])
+            mask = points_in_boxes_gpu(pcl[None, :, :3], torch.from_numpy(box[None, None, :]).cuda())
+            mask = mask[0, :] == 0
+            
+            pcl_in_box = deepcopy(pcl[mask, :].cpu().numpy())
+            
+            if pcl_in_box.shape[0] == 0:
+                continue
+
+            data[i, ipd.nr_pts] = pcl_in_box.shape[0]
+            
+            # move to center
+            pcl_in_box[:, :3] -= box[:3]
+            box[:3] = 0
+
+            # rotate to align with x-axis
+            rotmat = R.from_euler('z', box[6], degrees=False).as_matrix()
+            
+            pcl_in_box[:, :3] = np.matmul(pcl_in_box[:, :3], rotmat)
+            box[6] = 0
+
+            # scale to unit box
+            pcl_in_box[:, :3] /= box[3:6]
+            box[3:6] = 1
+
+            data[i, ipd.min_x] = np.min(pcl_in_box[:, 0])
+            data[i, ipd.min_y] = np.min(pcl_in_box[:, 1])
+            data[i, ipd.min_z] = np.min(pcl_in_box[:, 2])
+            data[i, ipd.min_refl] = np.min(pcl_in_box[:, 3])
+            # data[i, ipd.min_elongation] = np.min(pcl_in_box[:, 4])  # elongation for Waymo, unavailiable for KITTY
+
+            data[i, ipd.max_x] = np.max(pcl_in_box[:, 0])
+            data[i, ipd.max_y] = np.max(pcl_in_box[:, 1])
+            data[i, ipd.max_z] = np.max(pcl_in_box[:, 2])
+            data[i, ipd.max_refl] = np.max(pcl_in_box[:, 3])
+            # data[i, ipd.max_elongation] = np.max(pcl_in_box[:, 4])
+
+            data[i, ipd.mean_x] = np.mean(pcl_in_box[:, 0])
+            data[i, ipd.mean_y] = np.mean(pcl_in_box[:, 1])
+            data[i, ipd.mean_z] = np.mean(pcl_in_box[:, 2])
+            data[i, ipd.mean_refl] = np.mean(pcl_in_box[:, 3])
+            # data[i, ipd.mean_elongation] = np.mean(pcl_in_box[:, 4])
+
+            data[i, ipd.std_x] = np.std(pcl_in_box[:, 0])
+            data[i, ipd.std_y] = np.std(pcl_in_box[:, 1])
+            data[i, ipd.std_z] = np.std(pcl_in_box[:, 2])
+            data[i, ipd.std_refl] = np.std(pcl_in_box[:, 3])
+            # data[i, ipd.std_elongation] = np.std(pcl_in_box[:, 4])
+
+        return data  # (num_roi, 28)
+
+
     def roi_grid_pool(self, batch_dict):
         """
         Args:
             batch_dict:
                 batch_size:
+                points: (num_rawpts, 5)  [bs_idx, x, y, z, refl]
                 rois: (B, num_rois, 7 + C)
-                point_coords: (num_points, 4)  [bs_idx, x, y, z]
-                point_features: (num_points, C)
+                roi_scores: (1, num_rois)
+                point_coords: (num_keypoints, 4)  [bs_idx, x, y, z]
+                point_features: (num_keypoints, C)
                 point_cls_scores: (N1 + N2 + N3 + ..., 1)
                 point_part_offset: (N1 + N2 + N3 + ..., 3)
         Returns:
@@ -107,6 +208,10 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         rois = batch_dict['rois']
         point_coords = batch_dict['point_coords']
         point_features = batch_dict['point_features']
+
+        roi_boxes = (rois.view(-1, rois.shape[-1]))[:, :7]  # (num_roi, 7)=(100, 7)
+        pcl = batch_dict['points']  # (num_raw_pts, 5)=(60585, 5) [bs_idx, x, y, z, refl]
+        ip_features = torch.from_numpy(self.extract_instance_properties(roi_boxes, pcl[:, 1:]))  # (num_roi, 28)=(100, 28)
 
         point_features = point_features * batch_dict['point_cls_scores'].view(-1, 1)
 
@@ -134,8 +239,8 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         pooled_features = pooled_features.view(
             -1, self.model_cfg.ROI_GRID_POOL.GRID_SIZE ** 3,
             pooled_features.shape[-1]
-        )  # (BxN, 6x6x6, C)
-        return pooled_features
+        )  # (BxN, 6x6x6, C)=(100, 216, 128)
+        return pooled_features, ip_features
 
     def get_global_grid_points_of_roi(self, rois, grid_size):
         rois = rois.view(-1, rois.shape[-1])
@@ -178,15 +283,16 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
 
         _, N, _ = batch_dict['rois'].shape
         # RoI aware pooling
-        pooled_features = self.roi_grid_pool(batch_dict)  # (BxN, 6x6x6, C)
+        pooled_features, ip_features = self.roi_grid_pool(batch_dict)  # (BxN, 6x6x6, C) C=128; (BxN, 28)
 
         grid_size = self.model_cfg.ROI_GRID_POOL.GRID_SIZE
         batch_size_rcnn = pooled_features.shape[0]
         pooled_features = pooled_features.permute(0, 2, 1).\
-            contiguous().view(batch_size_rcnn, -1, grid_size, grid_size, grid_size)  # (BxN, C, 6, 6, 6)
+            contiguous().view(batch_size_rcnn, -1, grid_size, grid_size, grid_size)  # (BxN, C, 6, 6, 6) C=128
         
-        pooled_features = self.shared_fc_layer(pooled_features.view(batch_size_rcnn, -1, 1))
-        batch_dict['pooled_features'] = pooled_features.view(-1, N, self.model_cfg.SHARED_FC[-1])
+        pooled_features = self.shared_fc_layer(pooled_features.view(batch_size_rcnn, -1, 1))  # (BxN, C', 1)=(100, 256, 1)
+        batch_dict['pooled_features'] = pooled_features.view(-1, N, self.model_cfg.SHARED_FC[-1])  # (1, 100, 256)
+        batch_dict['ip_features'] = ip_features.view(-1, N, len(self.ip_dict))  # (1, 100, 28)
 
         self.forward_ret_dict = targets_dict
 

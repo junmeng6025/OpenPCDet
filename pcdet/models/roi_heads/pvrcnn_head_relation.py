@@ -94,27 +94,29 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         Args:
             batch_dict:
                 batch_size:
+                points: (num_rawpts, 5)  [bs_idx, x, y, z, refl]
                 rois: (B, num_rois, 7 + C)
-                point_coords: (num_points, 4)  [bs_idx, x, y, z]
-                point_features: (num_points, C)
+                roi_scores: (1, num_rois)
+                point_coords: (num_keypoints, 4)  [bs_idx, x, y, z]
+                point_features: (num_keypoints, C)
                 point_cls_scores: (N1 + N2 + N3 + ..., 1)
                 point_part_offset: (N1 + N2 + N3 + ..., 3)
         Returns:
 
         """
         batch_size = batch_dict['batch_size']
-        rois = batch_dict['rois']
-        point_coords = batch_dict['point_coords']
-        point_features = batch_dict['point_features']
+        rois = batch_dict['rois']  # (1, 100, 7) -> N=100
+        point_coords = batch_dict['point_coords']  # (2048, 4)
+        point_features = batch_dict['point_features']  # (2048, 128)
 
-        point_features = point_features * batch_dict['point_cls_scores'].view(-1, 1)
+        point_features = point_features * batch_dict['point_cls_scores'].view(-1, 1)  # 'point_cls_scores' (2048)
 
         global_roi_grid_points, local_roi_grid_points = self.get_global_grid_points_of_roi(
             rois, grid_size=self.model_cfg.ROI_GRID_POOL.GRID_SIZE
         )  # (BxN, 6x6x6, 3)
         global_roi_grid_points = global_roi_grid_points.view(batch_size, -1, 3)  # (B, Nx6x6x6, 3)
 
-        xyz = point_coords[:, 1:4]
+        xyz = point_coords[:, 1:4]  # Keypoints (2048, 3)
         xyz_batch_cnt = xyz.new_zeros(batch_size).int()
         batch_idx = point_coords[:, 0]
         for k in range(batch_size):
@@ -134,7 +136,7 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             -1, self.model_cfg.ROI_GRID_POOL.GRID_SIZE ** 3,
             pooled_features.shape[-1]
         )  # (BxN, 6x6x6, C)
-        return pooled_features
+        return pooled_features  # (100, 216, 128)
 
     def get_global_grid_points_of_roi(self, rois, grid_size):
         rois = rois.view(-1, rois.shape[-1])
@@ -185,7 +187,7 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             contiguous().view(batch_size_rcnn, -1, grid_size, grid_size, grid_size)  # (BxN, C, 6, 6, 6)
         
         pooled_features = self.shared_fc_layer(pooled_features.view(batch_size_rcnn, -1, 1))
-        batch_dict['pooled_features'] = pooled_features.view(-1, N, self.model_cfg.SHARED_FC[-1])
+        batch_dict['pooled_features'] = pooled_features.view(-1, N, self.model_cfg.SHARED_FC[-1])  # (1, 100, 256)
 
         self.forward_ret_dict = targets_dict
 
@@ -213,7 +215,7 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             rcnn_cls = batch_dict['rcnn_cls']
             rcnn_reg = batch_dict['rcnn_reg']
         else:
-            shared_features = batch_dict['related_features']
+            shared_features = batch_dict['related_features']  # (100, 1280, 1)
             shared_features = shared_features.view(-1, self.head_input_channels, 1)
             rcnn_cls = self.cls_layers(shared_features).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, 1 or 2)
             rcnn_reg = self.reg_layers(shared_features).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, C)

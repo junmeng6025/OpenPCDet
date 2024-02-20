@@ -13,6 +13,42 @@ INFO_PATH: {
     'test': [kitti_infos_val.pkl],
 }
 
+# Training ==========================
+# DATA_SPLIT: {
+#     'train': train_iv08,
+#     'test': val_iv02,
+# }
+
+# INFO_PATH: {
+#     'train': [kitti_infos_train_iv.pkl],
+#     'test': [kitti_infos_val_iv.pkl],
+# }
+# Training ==========================
+
+# KITTI TEST ==========================
+# DATA_SPLIT: {
+#     'train': train_iv08,
+#     'test': test,
+# }
+
+# INFO_PATH: {
+#     'train': [kitti_infos_train_iv.pkl],
+#     'test': [kitti_infos_test.pkl],
+# }
+# KITTI TEST ==========================
+
+# EVAL ==========================
+# DATA_SPLIT: {
+#     'train': train_iv08,
+#     'test': val,
+# }
+
+# INFO_PATH: {
+#     'train': [kitti_infos_train_iv.pkl],
+#     'test': [kitti_infos_val.pkl],
+# }
+# EVAL ==========================
+
 GET_ITEM_LIST: ["points"]
 FOV_POINTS_ONLY: True
 

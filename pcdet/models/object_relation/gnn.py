@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch_geometric as tg
 import torch.nn.functional as F
 from .utils import build_mlp
+from ..roi_heads.pvrcnn_head_relation_new import INSTANCE_PROP
 # import torch_scatter
 
 # custom implementation for EdgeConv
@@ -46,7 +47,7 @@ class EdgeConv(tg.nn.MessagePassing):
 
 
 class GNN(nn.Module):
-    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256):
+    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256, ip_feature_dim=len(INSTANCE_PROP)):
         super(GNN, self).__init__()
         self.graph_cfg = object_relation_cfg.GRAPH
         self.graph_conv = object_relation_cfg.GRAPH.CONV
@@ -59,6 +60,11 @@ class GNN(nn.Module):
         self.drop_out = object_relation_cfg.DP_RATIO
         self.skip_connection = object_relation_cfg.SKIP_CONNECTION
         self.pooled_feature_dim = pooled_feature_dim
+        self.ip_feature_dim = ip_feature_dim
+        
+        # global feature => node feature diff
+        # edge feature => box diff
+        # GNN F.append => node feature append
 
         if self.global_information:
             global_mlp_input_dim = pooled_feature_dim + 7 if self.global_information.CONCATENATED else 7
@@ -80,7 +86,7 @@ class GNN(nn.Module):
             edge_dim = (7 if self.graph_conv.EDGE_EMBEDDING else 0)
             if self.graph_conv.NAME == "EdgeConv":
                 curr_conv_layer_list.append(EdgeConv(2*input_dim+edge_dim, self.gnn_layers[i], drop_out=self.drop_out,  skip_connection=self.graph_conv.SKIP_CONNECTION))
-            elif self.graph_conv.NAME == "GATConv":
+            elif self.graph_conv.NAME == "GATConv": # Graph Attention
                 # layer according to tg example: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/gat.py
                 curr_conv_layer_list.append(nn.Dropout(p=self.drop_out))
                 curr_conv_layer_list.append(tg.nn.GATConv(input_dim, self.gnn_layers[i], self.graph_conv.HEADS, dropout=self.drop_out, edge_dim=edge_dim, concat=False))
@@ -125,7 +131,8 @@ class GNN(nn.Module):
         proposal_labels = batch_dict['roi_labels'].view(B*N)
         # BxNxC
         pooled_features = batch_dict['pooled_features'].view(B*N,C)
-        
+        # BxNx28
+        ip_features = batch_dict['ip_features'].view(B*N, self.ip_feature_dim)
 
         if self.global_information:
             if self.global_information.CONCATENATED:
@@ -140,6 +147,9 @@ class GNN(nn.Module):
             edge_index = self.get_edges(proposal_boxes[:,:3], proposal_labels, (B, N, C))
         elif self.graph_cfg.SPACE == 'Feature':
             edge_index = self.get_edges(pooled_features, proposal_labels, (B, N, C))
+        elif self.graph_cfg.SPACE == 'Instance':
+            assert self.graph_cfg.DYNAMIC == False, 'Distance should be measured in feature space if the graph is created dynamically'
+            edge_index = self.get_edges(ip_features, proposal_labels, (B, N, C))
         else:
             raise NotImplemented('Distance space was {} but should be R3 or FEATURE'.format(self.graph_cfg.SPACE))
         
@@ -151,7 +161,7 @@ class GNN(nn.Module):
             edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]
         
         gnn_features = [pooled_features]
-        x = pooled_features
+        x = pooled_features  # (100, 256)
         for module_list in self.gnn:
             for module in module_list:
                 if isinstance(module, (EdgeConv, tg.nn.GATConv)):
@@ -166,7 +176,7 @@ class GNN(nn.Module):
                     edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]
 
         if self.skip_connection:
-            batch_dict['related_features'] = torch.cat(gnn_features, dim=-1)
+            batch_dict['related_features'] = torch.cat(gnn_features, dim=-1)  # (100, 1280)
         else:
             batch_dict['related_features'] = x
 
@@ -194,9 +204,9 @@ class GNN(nn.Module):
             edge_index = f(edge_generating_tensor, a, batch=batch_vector, loop=False)
         return edge_index
 
-
 if __name__ == '__main__':
     from easydict import EasyDict as edict
+    # N=3 Proposals
     rois = torch.tensor([
         [[0, 0, 0, 0, 0, 0, 0], [2, 2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3, 3]]
     ], dtype=torch.float32)
@@ -212,7 +222,7 @@ if __name__ == '__main__':
         'roi_labels': proposal_labels  # Random labels for 10 batches of 100 proposals each
     }
 
-    cfg = edict({
+    cfg_radius = edict({
         'GRAPH': {
             'NAME': 'radius_graph',
             'RADIUS': 3,
@@ -224,7 +234,30 @@ if __name__ == '__main__':
         }
     })
 
-    model = GNN(cfg)
+    cfg_knn = edict({
+        'GRAPH': {
+            'NAME': 'knn_graph',
+            'CONV':{
+                'NAME': 'EdgeConv',
+                'EDGE_EMBEDDING': True,
+                'SKIP_CONNECTION': True
+            },
+            'DYNAMIC': False,
+            'K': 16,
+            "CONNECT_ONLY_SAME_CLASS": False,
+            'SPACE': 'R3',
+        },
+        'LAYERS': [256, 256, 256],
+        # 'GLOBAL_INFORMATION': {
+        #     'MLP_LAYERS': [256, 256, 256]
+        # }
+        'GLOBAL_INFORMATION': False,
+        'SKIP_CONNECTION': True,
+        'IN_BETWEEN_MLP': False,
+        'DP_RATIO': 0.3
+    })
+
+    model = GNN(cfg_knn)
 
     batch_dict = model(batch_dict)
     edges = batch_dict['gnn_edges']

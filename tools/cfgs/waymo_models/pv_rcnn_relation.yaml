@@ -201,7 +201,8 @@ MODEL:
             },
             DYNAMIC: False,
             NAME: knn_graph,
-            K: 16,
+            # K: 16,
+            K: 32,
             CONNECT_ONLY_SAME_CLASS: False,
             SPACE: R3,
         }
