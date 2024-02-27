@@ -17,17 +17,68 @@ python setup.py develop
 3. Prepare data according to [OpenPCDet](https://github.com/open-mmlab/OpenPCDet)
 
 ## Training & Testing
-The following commands should be ran in ``./tools``.
+The following commands should be run in `./tools`.
 
-Train Model:
+### Train Model:
+cmd saved in `/tools/run_train.sh`
 ```bash
-python train.py --cfg_file {PATH_TO_CONFIG_FILE}
+python train.py --cfg_file ${CFG_PATH}
 ```
+- `cfg_file` should be a `.yaml` file
 
-Test Model:
+### Test a single Model:
+cmd saved in `/tools/run_test.sh`
 ```bash
-python test.py --cfg_file {PATH_TO_CONFIG_FILE} --ckpt {PATH_TO_MODEL}
+python test.py --cfg_file ${CFG_PATH} --ckpt ${MODEL_PATH}
 ```
+- `cfg_file` should be a `.yaml` file  
+- `ckpt` should be a `.pth` file
+
+### Eval several trained checkpoints afterwards:
+cmd saved in `/tools/run_eval.sh`
+```bash
+python test.py --cfg_file ${CFG_PATH} --batch_size 2 --ckpt_dir ${CKPT_DIR} --eval_all --start_epoch ${START_EP}
+```
+- `cfg_file` should be a `.yaml` file  
+- `ckpt_dir` should be the ckpt path containing multiple `.pth` models
+- `start_epoch` should be an `int` number.
+
+### Genetrate test results as .txt for KITTI submission:
+cmd saved in `/tools/run_kitti_subm.sh`
+- modify the `kitti_dataset.yaml` in `/tools/cfgs/dataset_configs/`: change the`test` item in `DATA_SPLIT` and `INFO_PATH` from **"val"** to **"test"**.  
+  
+    from
+    ```yaml
+    DATA_SPLIT: {
+        'train': train,
+        'test': val # to edit
+    }
+
+    INFO_PATH: {
+        'train': [kitti_infos_train.pkl],
+        'test': [kitti_infos_val.pkl], # to edit
+    }
+    ```
+    to
+    ```yaml
+    DATA_SPLIT: {
+        'train': train,
+        'test': test # edited
+    }
+
+    INFO_PATH: {
+        'train': [kitti_infos_train.pkl],
+        'test': [kitti_infos_test.pkl], # edited
+    }
+    ```
+- run
+    ```bash
+    python test.py --cfg_file ${CFG_PATH} --batch_size 2 --ckpt ${MODEL_PATH} --save_to_file
+    ```
+
+### Visulization
+first the vis data would be generated via `kitti_demo.py` or `waymo_demo.py`, saved as `.json` files.  
+Then feed them to visualization script in `thesis_helper` to get images.
 
 ## Models
 

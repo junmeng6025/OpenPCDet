@@ -237,7 +237,7 @@ MODEL:
             NAME: knn_graph,
             K: 16,
             CONNECT_ONLY_SAME_CLASS: False,
-            SPACE: R3,
+            SPACE: Instance, # R3
             # EDGE_EMBEDDING: True,
         }
         LAYERS: [256, 256, 256, 256]

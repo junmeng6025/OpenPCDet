@@ -316,14 +316,35 @@ class KittiDataset(DatasetTemplate):
 
             pred_dict['name'] = np.array(class_names)[pred_labels - 1]
             pred_dict['alpha'] = -np.arctan2(-pred_boxes[:, 1], pred_boxes[:, 0]) + pred_boxes_camera[:, 6]
+            # pred_dict['alpha'] = (-np.arctan2(-pred_boxes[:, 1], pred_boxes[:, 0]) + pred_boxes_camera[:, 6])%(2*(np.pi))-np.pi
             pred_dict['bbox'] = pred_boxes_img
             pred_dict['dimensions'] = pred_boxes_camera[:, 3:6]
             pred_dict['location'] = pred_boxes_camera[:, 0:3]
             pred_dict['rotation_y'] = pred_boxes_camera[:, 6]
+            # pred_dict['rotation_y'] = (pred_boxes_camera[:, 6])%(2*(np.pi))-np.pi
             pred_dict['score'] = pred_scores
             pred_dict['boxes_lidar'] = pred_boxes
 
             return pred_dict
+        
+            # Values     Name      Description
+            # ----------------------------------------------------------------------------
+            #    1    type         Describes the type of object: 'Car', 'Van', 'Truck',
+            #                      'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram',
+            #                      'Misc' or 'DontCare'
+            #    1    truncated    Float from 0 (non-truncated) to 1 (truncated), where
+            #                      truncated refers to the object leaving image boundaries
+            #    1    occluded     Integer (0,1,2,3) indicating occlusion state:
+            #                      0 = fully visible, 1 = partly occluded
+            #                      2 = largely occluded, 3 = unknown
+            #    1    alpha        Observation angle of object, ranging [-pi..pi]
+            #    4    bbox         2D bounding box of object in the image (0-based index):
+            #                      contains left, top, right, bottom pixel coordinates
+            #    3    dimensions   3D object dimensions: height, width, length (in meters)
+            #    3    location     3D object location x,y,z in camera coordinates (in meters)
+            #    1    rotation_y   Rotation ry around Y-axis in camera coordinates [-pi..pi]
+            #    1    score        Only for results: Float, indicating confidence in
+            #                      detection, needed for p/r curves, higher is better.
 
         annos = []
         for index, box_dict in enumerate(pred_dicts):
@@ -347,6 +368,12 @@ class KittiDataset(DatasetTemplate):
                                  dims[idx][1], dims[idx][2], dims[idx][0], loc[idx][0],
                                  loc[idx][1], loc[idx][2], single_pred_dict['rotation_y'][idx],
                                  single_pred_dict['score'][idx]), file=f)
+                        # print('%s 0 3 %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f'
+                        #       % (single_pred_dict['name'][idx], single_pred_dict['alpha'][idx],
+                        #          bbox[idx][0], bbox[idx][1], bbox[idx][2], bbox[idx][3],
+                        #          dims[idx][1], dims[idx][2], dims[idx][0], loc[idx][0],
+                        #          loc[idx][1], loc[idx][2], single_pred_dict['rotation_y'][idx],
+                        #          single_pred_dict['score'][idx]), file=f)
 
         return annos
 
@@ -432,10 +459,15 @@ def create_kitti_infos(dataset_cfg, class_names, data_path, save_path, workers=4
     dataset = KittiDataset(dataset_cfg=dataset_cfg, class_names=class_names, root_path=data_path, training=False)
     train_split, val_split = 'train', 'val'
 
-    train_filename = save_path / ('kitti_infos_%s.pkl' % train_split)
-    val_filename = save_path / ('kitti_infos_%s.pkl' % val_split)
-    trainval_filename = save_path / 'kitti_infos_trainval.pkl'
-    test_filename = save_path / 'kitti_infos_test.pkl'
+    # train_filename = save_path / ('kitti_infos_%s.pkl' % train_split)
+    # val_filename = save_path / ('kitti_infos_%s.pkl' % val_split)
+    # trainval_filename = save_path / 'kitti_infos_trainval.pkl'
+    # test_filename = save_path / 'kitti_infos_test.pkl'
+
+    train_filename = save_path / ('kitti_infos_%s_iv.pkl' % train_split)
+    val_filename = save_path / ('kitti_infos_%s_iv.pkl' % val_split)
+    trainval_filename = save_path / 'kitti_infos_trainval_iv.pkl'
+    test_filename = save_path / 'kitti_infos_test_iv.pkl'
 
     print('---------------Start to generate data infos---------------')
 

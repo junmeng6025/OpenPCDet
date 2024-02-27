@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
 
-from pcdet.config import cfg, cfg_from_list, cfg_from_yaml_file, log_config_to_file, second_cfg_from_yaml_file
+from pcdet.config import cfg, cfg_from_list, cfg_from_yaml_file, log_config_to_file
 from pcdet.datasets import build_dataloader
 from pcdet.models import build_network, model_fn_decorator
 from pcdet.utils import common_utils
@@ -28,6 +28,7 @@ def parse_config():
     parser.add_argument('--workers', type=int, default=4, help='number of workers for dataloader')
     parser.add_argument('--extra_tag', type=str, default='default', help='extra tag for this experiment')
     parser.add_argument('--ckpt', type=str, default=None, help='checkpoint to start from')
+    parser.add_argument('--date_tag', type=str, default=None, help='the training to resume')
     parser.add_argument('--pretrained_model', type=str, default=None, help='pretrained_model')
     parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none')
     parser.add_argument('--tcp_port', type=int, default=18888, help='tcp port for distrbuted training')
@@ -87,7 +88,8 @@ def main():
     if args.fix_random_seed:
         common_utils.set_random_seed(666 + cfg.LOCAL_RANK)
 
-    output_dir = cfg.ROOT_DIR / 'output' / cfg.EXP_GROUP_PATH / cfg.TAG / args.extra_tag
+    date_tag = '%s'% datetime.datetime.now().strftime('%Y%m%d-%H%M%S') if args.date_tag is None else args.date_tag
+    output_dir = cfg.ROOT_DIR / 'output' / cfg.EXP_GROUP_PATH / cfg.TAG / args.extra_tag / date_tag
     ckpt_dir = output_dir / 'ckpt'
     output_dir.mkdir(parents=True, exist_ok=True)
     ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -141,6 +143,7 @@ def main():
     if args.pretrained_model is not None:
         model.load_params_from_file(filename=args.pretrained_model, to_cpu=dist_train, logger=logger)
     
+    # for FROZEN models: =============================================================================
     if 'PRE_TRAINED' in cfg:
         model.load_params_from_file(filename=cfg.PRE_TRAINED.MODEL_PATH, to_cpu=dist_train, logger=logger, learnable_layer=cfg.PRE_TRAINED.LEARNABLE_LAYER)
         # freeze all other layers
@@ -149,6 +152,7 @@ def main():
                     print('learnable layer: ', name)
             else:
                 param.requires_grad = False
+    # ================================================================================================
 
     if args.ckpt is not None:
         it, start_epoch = model.load_params_with_optimizer(args.ckpt, to_cpu=dist_train, optimizer=optimizer, logger=logger)

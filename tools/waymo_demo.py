@@ -22,9 +22,6 @@ from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 from pcdet.datasets.waymo.waymo_dataset import WaymoDataset
 
-NUMBER_OF_SCENES = 100
-
-
 class DemoDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.bin'):
         """
@@ -81,7 +78,7 @@ def parse_config():
     return args, cfg
 
 
-def main(model_path, cfg_path, tag):
+def main(model_path, cfg_path, output_path, num_scenes, tag=None):
     cfg_from_yaml_file(cfg_path, cfg)
     logger = common_utils.create_logger()
     logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
@@ -96,14 +93,16 @@ def main(model_path, cfg_path, tag):
     model.cuda()
     model.eval()
 
-    vis_path = '/'.join(os.path.normpath(model_path).split(os.path.sep)[:-2]) + '/visualization/' + tag
+    # vis_path = '/'.join(os.path.normpath(model_path).split(os.path.sep)[:-2]) + '/visualization/' + tag
+    vis_path = output_path
     os.makedirs(vis_path, exist_ok=True)
+    frame_ids = []
 
     with torch.no_grad():
         for idx, data_dict in enumerate(dataset):
             if idx % 100 != 0:
                 continue
-            if idx  >= NUMBER_OF_SCENES * 100:
+            if idx  >= num_scenes * 100:
                 break
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = dataset.collate_batch([data_dict])
@@ -111,6 +110,7 @@ def main(model_path, cfg_path, tag):
             pred_dicts, _ = model.forward(data_dict)
 
             frame_id = str(data_dict['frame_id'][0])
+            frame_ids.append(frame_id)
 
             torch.save(data_dict['points'][:,1:], os.path.join(vis_path, 'points_{}.pt'.format(frame_id)))
             torch.save(pred_dicts[0]['pred_boxes'], os.path.join(vis_path, 'pred_boxes_{}.pt'.format(frame_id)))
@@ -119,7 +119,7 @@ def main(model_path, cfg_path, tag):
             torch.save(data_dict['gt_boxes'], os.path.join(vis_path, 'gt_boxes_{}.pt'.format(frame_id)))
             if 'gnn_edges_final' in pred_dicts[0]:
                 torch.save(pred_dicts[0]['gnn_edges_final'],os.path.join(vis_path, 'gnn_edges{}.pt'.format(frame_id)))
-                json.dump(pred_dicts[0]['edge_to_pred'] , open(os.path.join(vis_path, 'edge_to_predict{}.json'.format(frame_id)), 'w'))
+                json.dump(pred_dicts[0]['edge_to_pred'], open(os.path.join(vis_path, 'edge_to_predict{}.json'.format(frame_id)), 'w'))
 
             # V.draw_scenes(
             #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
@@ -128,17 +128,38 @@ def main(model_path, cfg_path, tag):
 
             # if not OPEN3D_FLAG:
             #     mlab.show(stop=True)
-
     logger.info('Demo done.')
+    json.dump(frame_ids, open(os.path.join(vis_path, '00_frame_ids.json'), 'w'))
+    logger.info('frame_ids saved as json.')
 
 
 if __name__ == '__main__':
     
-    model_path = "../output/cfgs/waymo_models/pv_rcnn/2023-10-19_12-02-51/ckpt/checkpoint_epoch_30.pth"
-    cfg_path = "./cfgs/waymo_models/pv_rcnn.yaml"
-    tag = "epoch_30"
+    # model_path = "../output/cfgs/waymo_models/pv_rcnn/2023-10-19_12-02-51/ckpt/checkpoint_epoch_30.pth"
+    # cfg_path = "./cfgs/waymo_models/pv_rcnn.yaml"
+    # tag = "epoch_30"
 
     # model_path = "../output/cfgs/waymo_models/pv_rcnn_relation/2023-10-24_09-25-41/ckpt/checkpoint_epoch_25.pth"
     # cfg_path = "./cfgs/waymo_models/pv_rcnn_relation.yaml" 
     # tag = "epoch_25"
-    main(model_path, cfg_path, tag)
+
+    model_path = "../models/marc/waymo/pv-rcnn-relation/2023-10-24_09-25-41/ckpt/checkpoint_epoch_25.pth"
+    cfg_path = "./cfgs/waymo_models/pv_rcnn_relation.yaml"
+    tag = "epoch_25"
+
+    # PV-RCNN Relation: Cars Only =================================================
+    dataset = "waymo"
+    model = "pv-rcnn-relation"
+    cfg_fname = "pv_rcnn_relation_car_class_only.yaml"
+    det_cls = "car_class_only"
+    date_time = "2023-12-10_22-46-20"
+    epoch_tag = "epoch_30"
+
+    output_path = "../output/vis/%s/%s/%s/%s/%s"%(dataset, model, det_cls, date_time, epoch_tag)
+    # model_path = "../models/marc/%s/%s/%s/%s/ckpt/checkpoint_%s.pth"%(dataset, model, det_cls, date_time, epoch_tag)
+    model_path = "../output/cfgs/waymo_models/pv_rcnn_relation_car_class_only/%s/ckpt/checkpoint_%s.pth"%(date_time, epoch_tag)
+    cfg_path = "cfgs/%s_models/%s"%(dataset, cfg_fname)
+
+    NUMBER_OF_SCENES = 20
+
+    main(model_path, cfg_path, output_path, num_scenes=NUMBER_OF_SCENES)

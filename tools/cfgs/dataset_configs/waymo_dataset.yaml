@@ -9,6 +9,11 @@ DATA_SPLIT: {
     'test': val
 }
 
+INFO_PATH: {
+    'train': [waymo_processed_data_v0_5_0_infos_train.pkl],
+    'test': [waymo_processed_data_v0_5_0_infos_val.pkl],
+}
+
 SAMPLED_INTERVAL: {
     'train': 5,
     'test': 1
