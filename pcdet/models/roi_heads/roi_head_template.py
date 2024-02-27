@@ -78,20 +78,22 @@ class RoIHeadTemplate(nn.Module):
             else:
                 assert batch_dict['batch_cls_preds'].shape.__len__() == 3
                 batch_mask = index
-            box_preds = batch_box_preds[batch_mask]
-            cls_preds = batch_cls_preds[batch_mask]
+            box_preds = batch_box_preds[batch_mask]  # (211200, 7)
+            cls_preds = batch_cls_preds[batch_mask]  # (211200, 3)
 
-            cur_roi_scores, cur_roi_labels = torch.max(cls_preds, dim=1)
+            cur_roi_scores, cur_roi_labels = torch.max(cls_preds, dim=1)  # (211200)
 
             if nms_config.MULTI_CLASSES_NMS:
                 raise NotImplementedError
             else:
                 selected, selected_scores = class_agnostic_nms(
                     box_scores=cur_roi_scores, box_preds=box_preds, nms_config=nms_config
-                )
+                )  # selected_scores (100) == roi_scores (1, 100)
+            # cur_roi_scores: [-5.8958, -6.9965, -9.5896, ..., -9.4633, -9.4624, -9.4603]  (211200)
+            # roi_scores: [[-0.2593, -0.3912, -0.5298, ..., -2.9235, -2.9235, -2.9242]]  (1, 100)
 
             rois[index, :len(selected), :] = box_preds[selected]
-            roi_scores[index, :len(selected)] = cur_roi_scores[selected]
+            roi_scores[index, :len(selected)] = cur_roi_scores[selected]  # (batch_sz, num_selected_roi)=(1, 100)
             roi_labels[index, :len(selected)] = cur_roi_labels[selected]
 
         batch_dict['rois'] = rois
