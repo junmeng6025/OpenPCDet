@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch_geometric as tg
 import torch.nn.functional as F
 from .utils import build_mlp
-from ..roi_heads.pvrcnn_head_relation import INSTANCE_PROP
+from ..roi_heads.pvrcnn_head_relation import ROI_PCL_PROP
 # import torch_scatter
 
 # custom implementation for EdgeConv
@@ -47,7 +47,7 @@ class EdgeConv(tg.nn.MessagePassing):
 
 
 class GNN(nn.Module):
-    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256, ip_feature_dim=len(INSTANCE_PROP)):
+    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256, ip_feature_dim=128):
         super(GNN, self).__init__()
         self.graph_cfg = object_relation_cfg.GRAPH
         self.graph_conv = object_relation_cfg.GRAPH.CONV
