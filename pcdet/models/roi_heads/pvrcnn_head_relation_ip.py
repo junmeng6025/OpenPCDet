@@ -19,52 +19,15 @@ from ...ops.roiaware_pool3d.roiaware_pool3d_utils import points_in_boxes_gpu
 #     'std_x', 'std_y', 'std_z', 'std_refl'
 # ]  # elongation only for Waymo
 
-# INSTANCE_PROP = [ 
-#     'cx', 'cy', 'cz', 'dx', 'dy', 'dz', 'heading_cos', 'heading_sin',
-#     'min_x', 'min_y', 'min_z', 'min_refl',
-#     'max_x', 'max_y', 'max_z', 'max_refl',
-#     'mean_x', 'mean_y', 'mean_z', 'mean_refl',
-#     'std_x', 'std_y', 'std_z', 'std_refl'
-# ]  # elongation only for Waymo
+INSTANCE_PROP = [ 
+    'cx', 'cy', 'cz', 'dx', 'dy', 'dz', 'heading_cos', 'heading_sin',
+    'min_x', 'min_y', 'min_z', 'min_refl',
+    'max_x', 'max_y', 'max_z', 'max_refl',
+    'mean_x', 'mean_y', 'mean_z', 'mean_refl',
+    'std_x', 'std_y', 'std_z', 'std_refl'
+]  # elongation only for Waymo
 
-ROI_PCL_PROP = [ 
-    'x', 'y', 'z', 'refl'
-]
-
-# ROI_PCL_PROP = [ 
-#     'x', 'y', 'z', 'refl', 'x_diff', 'y_diff', 'z_diff'
-# ]
-
-EXPORT_PTSROI = False
-
-class ROIPointsMLP(nn.Module):
-    def __init__(self, ip_dim):
-        super(ROIPointsMLP, self).__init__()
-
-        # self.g_cfg = cfg.GACE
-        self.g_cfg = edict({
-            'MODEL':{
-                'H_I_HIDDEN_DIM': 256,
-                'H_I_OUTPUT_DIM': 128
-            }
-        })
-        
-        self.H_I = nn.Sequential(
-            nn.Conv2d(ip_dim, self.g_cfg.MODEL.H_I_HIDDEN_DIM, kernel_size=1),
-            nn.BatchNorm2d(self.g_cfg.MODEL.H_I_HIDDEN_DIM),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Conv2d(self.g_cfg.MODEL.H_I_HIDDEN_DIM, self.g_cfg.MODEL.H_I_HIDDEN_DIM, kernel_size=1),
-            nn.BatchNorm2d(self.g_cfg.MODEL.H_I_HIDDEN_DIM),
-            nn.ReLU(),
-            nn.Conv2d(self.g_cfg.MODEL.H_I_HIDDEN_DIM, self.g_cfg.MODEL.H_I_OUTPUT_DIM, kernel_size=1),
-            nn.BatchNorm2d(self.g_cfg.MODEL.H_I_OUTPUT_DIM),
-            nn.ReLU()
-        )
-    
-    def get_out_dim(self):
-        return self.g_cfg.MODEL.H_I_OUTPUT_DIM
-    
+# EXPORT_PTSROI = True
 
 class PVRCNNHeadRelation(RoIHeadTemplate):
     def __init__(self, input_channels, model_cfg, num_class=1, object_relation_config=None, **kwargs):
@@ -75,8 +38,7 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             input_channels=input_channels, config=self.model_cfg.ROI_GRID_POOL
         )
 
-        self.roi_pcl_dict = edict({k: i for i, k in enumerate(ROI_PCL_PROP)})
-        self.roi_mlp = ROIPointsMLP(ip_dim=len(ROI_PCL_PROP))
+        self.ip_dict = edict({k: i for i, k in enumerate(INSTANCE_PROP)})
 
         GRID_SIZE = self.model_cfg.ROI_GRID_POOL.GRID_SIZE
         pre_channel = GRID_SIZE * GRID_SIZE * GRID_SIZE * num_c_out
@@ -184,9 +146,9 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
 
         # data[:, ipd.dist] = np.linalg.norm(roi_boxes_np[:, :3], axis=1)
 
-        if EXPORT_PTSROI:
-            pcl_roi = deepcopy(pcl.cpu().numpy())
-            pcl_roi = torch.from_numpy(np.hstack((np.full((pcl_roi.shape[0], 1), -1), pcl_roi))).to(pcl.device)  # (num_raw_pts, 5)=(60585, 5) [roi_id=-1, x, y, z, refl]
+        # if EXPORT_PTSROI:
+        #     pcl_roi = deepcopy(pcl.cpu().numpy())
+        #     pcl_roi = torch.from_numpy(np.hstack((np.full((pcl_roi.shape[0], 1), -1), pcl_roi))).to(pcl.device)  # (num_raw_pts, 5)=(60585, 5) [roi_id=-1, x, y, z, refl]
 
         for i in range(roi_boxes_np.shape[0]):
             box = deepcopy(roi_boxes_np[i, :])
@@ -194,8 +156,8 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             mask = mask[0, :] == 0  # (num_raw_pts)=(60585) [T/F]
             
             pcl_in_box = deepcopy(pcl[mask, :].cpu().numpy())
-            if EXPORT_PTSROI:
-                pcl_roi[mask, 0] = i
+            # if EXPORT_PTSROI:
+            #     pcl_roi[mask, 0] = i
                 
             if pcl_in_box.shape[0] == 0:
                 continue
@@ -239,63 +201,13 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
             data[i, ipd.std_z] = np.std(pcl_in_box[:, 2])
             data[i, ipd.std_refl] = np.std(pcl_in_box[:, 3])
             # data[i, ipd.std_elongation] = np.std(pcl_in_box[:, 4])
-            
+
             data_tensor = torch.from_numpy(data).to(roi_boxes.device)
         # roi_count = np.count_nonzero((pcl_roi[:, 0].cpu().numpy()) != -1)
         # print("Num roi in 'roi_boxes'=%d; Count in 'pcl_roi'=%d")%(roi_boxes_np.shape[0],roi_count)
-        return data_tensor, pcl_roi  # (num_roi, 28)
+        # return data_tensor, pcl_roi  # (num_roi, 28)
+        return data_tensor  # (num_roi, 28)
 
-    def roi_pcl_pool(self, pcl, roi_boxes):
-        """
-        Args:
-            pcl: (num_rawpts, 4)  [x, y, z, refl]
-            roi_boxes: (B, num_rois, 7 + C)
-        Returns:
-
-        """
-        roi_pcl_dict = self.roi_pcl_dict
-        # data = np.zeros((roi_boxes.shape[0], len(roi_pcl_dict)), dtype=np.float32)  # in CPU
-        # data = roi_boxes.new_zeros((roi_boxes.shape[0], len(ipd)), dtype=torch.float32)  # in GPU
-        roi_boxes_np = deepcopy(roi_boxes.cpu().numpy())
-        roi_boxes_np[:, 6] = np.mod(roi_boxes_np[:, 6], 2*np.pi)
-
-        # pcl_roi = deepcopy(pcl.cpu().numpy())
-        # pcl_roi = torch.from_numpy(np.hstack((np.full((pcl_roi.shape[0], 1), -1), pcl_roi))).to(pcl.device)  # (num_raw_pts, 5)=(60585, 5) [roi_id=-1, x, y, z, refl]
-        roi_pt_features = []
-        for i in range(roi_boxes_np.shape[0]):
-            box = deepcopy(roi_boxes_np[i, :])
-            mask = points_in_boxes_gpu(pcl[None, :, :3], torch.from_numpy(box[None, None, :]).cuda())
-            mask = mask[0, :] == 0  # (num_raw_pts)=(60585) [T/F]
-            
-            pcl_in_box = deepcopy(pcl[mask, :].cpu().numpy())  # (num_pcl_in_roi, 4)
-
-            if pcl_in_box.shape[0] == 0:
-                continue
-            
-            # move to center
-            pcl_in_box[:, :3] -= box[:3]
-            box[:3] = 0
-
-            # rotate to align with x-axis
-            rotmat = R.from_euler('z', box[6], degrees=False).as_matrix()
-            
-            pcl_in_box[:, :3] = np.matmul(pcl_in_box[:, :3], rotmat)
-            box[6] = 0
-
-            # scale to unit box
-            pcl_in_box[:, :3] /= box[3:6]
-            box[3:6] = 1
-
-            pt_features = []
-            for pt in pcl_in_box:
-                pt_feature = self.roi_mlp.H_I(pt)
-                pt_features.append(pt_feature)
-            pt_features=np.array(pt_features)
-            roi_pt_feature=np.max(pt_features, axis=0)
-            roi_pt_features.append(roi_pt_feature)
-            
-        roi_pt_features = np.array(roi_pt_features)
-        return torch.from_numpy(roi_pt_features).to(roi_boxes.device)
 
     def roi_grid_pool(self, batch_dict):
         """
@@ -318,12 +230,14 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         point_coords = batch_dict['point_coords']
         point_features = batch_dict['point_features']
 
+        # point_part_offset = batch_dict['point_part_offset']
+
         roi_boxes = (rois.view(-1, rois.shape[-1]))[:, :7]  # (num_roi, 7)=(100, 7)
         pcl = batch_dict['points']  # (num_raw_pts, 5)=(60585, 5) [bs_idx, x, y, z, refl]
         # ip_features, pcl_roi = self.extract_instance_properties(roi_boxes, pcl[:, 1:])  # (num_roi, 28)=(100, 28) -> DEVICE should be 'CUDA'
+        ip_features = self.extract_instance_properties(roi_boxes, pcl[:, 1:])  # (num_roi, 28)=(100, 28) -> DEVICE should be 'CUDA'
         # if EXPORT_PTSROI:
         #     batch_dict['pcl_roi'] = pcl_roi
-        roi_pt_features = roi_pcl_pool(pcl[:, 1:], roi_boxes)
 
         point_features = point_features * batch_dict['point_cls_scores'].view(-1, 1)
 
