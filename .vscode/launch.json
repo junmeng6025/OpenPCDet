@@ -5,6 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "GNN",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "preLaunchTask": "Change working directory",
+            "cwd": "/root/OpenPCDet/pcdet/models/object_relation",
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_models/pv_rcnn.yaml",
+                "--ckpt",
+                "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth",
+                "--data_path",
+                "../data/waymo/waymo_processed_data_v0_5_0/segment-15832924468527961_1564_160_1584_160_with_camera_labels/0000.npy",
+                "--ext",
+                ".npy"
+            ]
+        },
+        {
             "name": "Waymo Demo",
             "type": "python",
             "request": "launch",
@@ -13,7 +33,16 @@
             "justMyCode": true,
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
-            "args": ["--cfg_file", "./cfgs/waymo_models/pv_rcnn.yaml", "--ckpt", "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth", "--data_path", "../data/waymo/waymo_processed_data_v0_5_0/segment-15832924468527961_1564_160_1584_160_with_camera_labels/0000.npy", "--ext", ".npy"]
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_models/pv_rcnn.yaml",
+                "--ckpt",
+                "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth",
+                "--data_path",
+                "../data/waymo/waymo_processed_data_v0_5_0/segment-15832924468527961_1564_160_1584_160_with_camera_labels/0000.npy",
+                "--ext",
+                ".npy"
+            ]
         },
         {
             "name": "Kitti Demo",
@@ -43,7 +72,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_BADet_car_class_only.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_BADet_car_class_only.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -54,7 +88,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/waymo_models/pv_rcnn.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_models/pv_rcnn.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -65,7 +104,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/waymo_models/pv_rcnn_relation.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_models/pv_rcnn_relation.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -76,12 +120,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -91,11 +139,15 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/experiments/post_mlp/a.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/experiments/post_mlp/a.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
-
         {
             "name": "Python: Train KITTI FROZEN PV_RCNN",
             "type": "python",
@@ -103,12 +155,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_frozen.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_frozen.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -118,7 +174,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/experiments/iterative_gnn/OneGNNIteration_added.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/experiments/iterative_gnn/OneGNNIteration_added.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -129,7 +190,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_frozen_relation.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_frozen_relation.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -140,7 +206,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/waymo_models/pv_rcnn.yaml", "--ckpt", "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth", "--extra_tag", "default"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_models/pv_rcnn.yaml",
+                "--ckpt",
+                "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth",
+                "--extra_tag",
+                "default"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -150,20 +223,32 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/waymo_modelspv_rcnn.yaml", "--ckpt", "../output/cfgs/kitti_models/pv_rcnn/2023-09-04_09-52-39/ckpt/checkpoint_epoch_78.pth", "--extra_tag", "2023-09-04_09-52-39"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/waymo_modelspv_rcnn.yaml",
+                "--ckpt",
+                "../output/cfgs/kitti_models/pv_rcnn/2023-09-04_09-52-39/ckpt/checkpoint_epoch_78.pth",
+                "--extra_tag",
+                "2023-09-04_09-52-39"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
-
         {
             "name": "Python: Evaluate KITTI PV_RCNN Frozen",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn.yaml", "--ckpt", "../output/cfgs/kitti_models/pv_rcnn/2023-09-04_09-52-39/ckpt/checkpoint_epoch_78.pth", "--extra_tag", "2023-09-04_09-52-39"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn.yaml",
+                "--ckpt",
+                "../output/cfgs/kitti_models/pv_rcnn/2023-09-04_09-52-39/ckpt/checkpoint_epoch_78.pth",
+                "--extra_tag",
+                "2023-09-04_09-52-39"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
-
         {
             "name": "Python: Train KITTI PV_RCNN_Relation Car Class only",
             "type": "python",
@@ -171,15 +256,18 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
-
         {
             "name": "Python: Train KITTI PV_RCNN_PlusPlus_Relation Car Class only",
             "type": "python",
@@ -187,12 +275,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus_relation_car_class_only.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus_relation_car_class_only.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -202,12 +294,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/voxel_rcnn_car.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/voxel_rcnn_car.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -217,12 +313,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/voxel_rcnn_relation_car.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/voxel_rcnn_relation_car.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -232,12 +332,16 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus_relation.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus_relation.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
         },
         {
@@ -247,7 +351,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_relation.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_relation.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/",
         },
@@ -258,10 +367,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             "env": {
                 "CUDA_VISIBLE_DEVICES": "1"
-                
             },
             // "preLaunchTask": "Change working directory",
             "cwd": "/root/OpenPCDet/tools/"
@@ -273,7 +386,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/centerpoint.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/centerpoint.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
         {
@@ -283,7 +401,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/centerpoint_twostage.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/centerpoint_twostage.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
         {
@@ -293,7 +416,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/PartA2_car_class_only.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/PartA2_car_class_only.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
         {
@@ -303,7 +431,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--cfg_file", "./cfgs/kitti_models/PartA2_relation_car_class_only.yaml", "--extra_tag", "debug"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/PartA2_relation_car_class_only.yaml",
+                "--extra_tag",
+                "debug"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
         },
         {
@@ -315,7 +448,6 @@
             "justMyCode": true,
             // "env": {
             //     "CUDA_VISIBLE_DEVICES": "1"
-                
             // },
             // "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn.yaml", "--ckpt", "../output/kitti/pv_rcnn_8369.pth", "--data_path", "../data/kitti/testing/velodyne/000008.bin"],
             // "preLaunchTask": "Change working directory",
@@ -327,11 +459,17 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml", "--ckpt", "../output/cfgs/kitti_models/pv_rcnn_relation_car_class_only/2023-09-29_07-21-48/ckpt/checkpoint_epoch_80.pth", "--extra_tag", "2023-09-29_07-21-48"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml",
+                "--ckpt",
+                "../output/cfgs/kitti_models/pv_rcnn_relation_car_class_only/2023-09-29_07-21-48/ckpt/checkpoint_epoch_80.pth",
+                "--extra_tag",
+                "2023-09-29_07-21-48"
+            ],
             "cwd": "/root/OpenPCDet/tools/",
             "env": {
                 "CUDA_VISIBLE_DEVICES": "1"
-                
             },
             "justMyCode": false
         },
@@ -341,7 +479,15 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus.yaml", "--batch_size", "8", "--extra_tag", "2023-07-31_15-59-33", "--eval_all"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus.yaml",
+                "--batch_size",
+                "8",
+                "--extra_tag",
+                "2023-07-31_15-59-33",
+                "--eval_all"
+            ],
             "cwd": "/root/OpenPCDet/tools/"
         },
         {
@@ -350,7 +496,13 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus_relation.yaml", "--extra_tag", "2023-09-11_09-37-34", "--eval_all"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus_relation.yaml",
+                "--extra_tag",
+                "2023-09-11_09-37-34",
+                "--eval_all"
+            ],
             "cwd": "/root/OpenPCDet/tools/"
         },
         {
@@ -359,7 +511,13 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/centerpoint_twostage.yaml", "--extra_tag", "2023-09-12_13-29-56", "--eval_all"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/centerpoint_twostage.yaml",
+                "--extra_tag",
+                "2023-09-12_13-29-56",
+                "--eval_all"
+            ],
             "cwd": "/root/OpenPCDet/tools/"
         },
         {
@@ -368,7 +526,13 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_relation_fc.yaml", "--extra_tag", "2023-09-14_13-12-43", "--eval_all"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_relation_fc.yaml",
+                "--extra_tag",
+                "2023-09-14_13-12-43",
+                "--eval_all"
+            ],
             "cwd": "/root/OpenPCDet/tools/"
         },
         {
@@ -376,7 +540,14 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--cfg_file", "./cfgs/kitti_models/pv_rcnn_plusplus.yaml", "--extra_tag", "2023-07-29_20-33-11_continued", "--ckpt", "../output/cfgs/kitti_models/pv_rcnn_plusplus/2023-07-29_20-33-11/ckpt/checkpoint_epoch_80.pth"],
+            "args": [
+                "--cfg_file",
+                "./cfgs/kitti_models/pv_rcnn_plusplus.yaml",
+                "--extra_tag",
+                "2023-07-29_20-33-11_continued",
+                "--ckpt",
+                "../output/cfgs/kitti_models/pv_rcnn_plusplus/2023-07-29_20-33-11/ckpt/checkpoint_epoch_80.pth"
+            ],
             "console": "integratedTerminal",
             "cwd": "/root/OpenPCDet/tools/"
         }
