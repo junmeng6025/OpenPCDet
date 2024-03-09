@@ -88,46 +88,6 @@ def main(cfg_path, model_path, output_path, num_scenes, save_3d=False, save_roi=
     logger.info('Demo done.')
 
 if __name__ == '__main__':
-    # model_path = '../output/cfgs/kitti_models/pv_rcnn_relation/2023-09-15_10-21-38'
-    # model_path = '../output/cfgs/kitti_models/pv_rcnn_relation_car_class_only/2023-09-29_07-21-48'
-    # model_path = '../output/cfgs/kitti_models/pv_rcnn_relation/2023-08-25_13-47-22'
-    # full_model_path = model_path + '/ckpt/checkpoint_epoch_73.pth'
-    # full_model_path = model_path + '/ckpt/checkpoint_epoch_80.pth'
-    # cfg_path = model_path + '/pv_rcnn_relation.yaml'
-    # cfg_path = '../tools/cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml'
-    # /pv_rcnn_relation.yaml
-    # tag = '/epoch_80/'
-    # tag = '/no_post_processing/'
-    # tag = '/no_post_processing-94_epoch/'
-    # tag = '/epoch_100_no_post_processing/'
-
-    # model_path = '../output/cfgs/kitti_models/pv_rcnn/2023-08-01_20-06-45/ckpt/checkpoint_epoch_90.pth'
-    # model_path = '../output/cfgs/kitti_models/pv_rcnn/debug/ckpt/checkpoint_epoch_2.pth'
-    # model_path = '../output/kitti/pv_rcnn_8369.pth'
-
-    # model_path = '../models_marc/kitti/pv-rcnn-relation/all_classes/2023-10-18_08-08-10'
-    # full_model_path = model_path + '/ckpt/checkpoint_epoch_80.pth'
-
-    # model_path = '../models/demo'
-    # full_model_path = model_path + '/pv_rcnn_8369.pth'
-    # cfg_path = 'cfgs/kitti_models/second.yaml'
-
-    # Muster ======================================================================
-    
-
-    # PV-RCNN Relation: all class =================================================
-    # tag = '/epoch_80/'
-    # cfg_path= "cfgs/kitti_models/pv_rcnn_frozen_relation.yaml"
-    # model_path= "../models/marc/kitti/pv-rcnn-relation/all_classes/2023-10-18_08-08-10"
-    # full_model_path = model_path + "/ckpt/checkpoint_epoch_80.pth"
-
-    # PV-RCNN Relation: Cars Only =================================================
-    # dataset = "kitti"
-    # model = "pv-rcnn-relation"
-    # cfg_fname = "pv_rcnn_frozen_relation_car_class_only.yaml"
-    # det_cls = "car_class_only"
-    # date_time = "2023-09-30_09-24-51"
-    # epoch_tag = "epoch_79"
 
     output_path = "../output/vis/kitti/pv-rcnn-relation-ip/all_class/20240220/ep80"
     model_path = "../output/kitti_models/pv_rcnn_relation/train-AllClass-k16-Instance/20240220-144507/ckpt/checkpoint_epoch_80.pth"
@@ -136,4 +96,4 @@ if __name__ == '__main__':
     NUMBER_OF_SCENES = 10
 
     # main(cfg_path, full_model_path, data_path, save_3d=True, tag=tag)
-    main(cfg_path, model_path, output_path, num_scenes=NUMBER_OF_SCENES, save_3d=True, save_roi=True)
+    main(cfg_path, model_path, output_path, num_scenes=NUMBER_OF_SCENES, save_3d=False, save_roi=True)

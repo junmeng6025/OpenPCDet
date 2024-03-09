@@ -21,12 +21,14 @@ from tools.process_tools.logger import CustomEncoder
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default=None, help='specify the config for training')
+    parser.add_argument('--cfg_file', type=str, default='cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml', 
+                        help='specify the config for training')
 
-    parser.add_argument('--batch_size', type=int, default=None, required=False, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=2, required=False, help='batch size for training')
     parser.add_argument('--workers', type=int, default=4, help='number of workers for dataloader')
-    parser.add_argument('--extra_tag', type=str, default='default', help='extra tag for this experiment')
-    parser.add_argument('--ckpt', type=str, default=None, help='checkpoint to start from')
+    parser.add_argument('--extra_tag', type=str, default='debug', help='extra tag for this experiment')
+    parser.add_argument('--ckpt', type=str, default='../output/kitti_models/pv_rcnn_relation_car_class_only/train-CarClass-k16-IP_mlp/20240301-194056/ckpt/checkpoint_epoch_80.pth', 
+                        help='checkpoint to start from')
     parser.add_argument('--pretrained_model', type=str, default=None, help='pretrained_model')
     parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none')
     parser.add_argument('--tcp_port', type=int, default=18888, help='tcp port for distrbuted training')
@@ -38,7 +40,8 @@ def parse_config():
     parser.add_argument('--start_epoch', type=int, default=0, help='')
     parser.add_argument('--eval_tag', type=str, default='default', help='eval tag for this experiment')
     parser.add_argument('--eval_all', action='store_true', default=False, help='whether to evaluate all checkpoints')
-    parser.add_argument('--ckpt_dir', type=str, default=None, help='specify a ckpt directory to be evaluated if needed')
+    parser.add_argument('--ckpt_dir', type=str, default=None, 
+                        help='specify a ckpt directory to be evaluated if needed')
     parser.add_argument('--save_to_file', action='store_true', default=False, 
                         help='generate test result as .txt file (for leaderboard submission) and save')
     parser.add_argument('--infer_time', action='store_true', default=False, help='calculate inference latency')

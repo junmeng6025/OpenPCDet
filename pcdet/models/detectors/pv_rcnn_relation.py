@@ -28,6 +28,7 @@ class PVRCNNRelation(Detector3DTemplate):
         batch_dict = self.point_head(batch_dict)
         # PVRCNNHead: Proposal refinement
         batch_dict = self.roi_head(batch_dict)
+        # ROIPCL: Learn features of points within proposal boxes
         # GNN: Object relation
         batch_dict = self.object_relation(batch_dict)
 
