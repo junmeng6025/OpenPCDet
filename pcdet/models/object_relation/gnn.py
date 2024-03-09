@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch_geometric as tg
 import torch.nn.functional as F
-from .utils import build_mlp
-from ..roi_heads.pvrcnn_head_relation import ROI_PCL_PROP
+from utils import build_mlp  # TODO: add . before utils after Debug
+# from ..roi_heads.pvrcnn_head_relation import ROI_PCL_PROP
 # import torch_scatter
 
 # custom implementation for EdgeConv
@@ -39,7 +39,7 @@ class EdgeConv(tg.nn.MessagePassing):
 
     def message(self, x_i, x_j, edge_attr=None):
         if edge_attr is not None:
-            x = torch.cat((x_j - x_i, x_i, edge_attr), dim=-1)
+            x = torch.cat((x_j - x_i, x_i, edge_attr), dim=-1)  # 384+ 384+ 7= 775 / 256+ 256+ 7= 519
         else:
             x = torch.cat((x_j - x_i, x_i), dim=-1)
         x = self.mlp(x)
@@ -61,20 +61,26 @@ class GNN(nn.Module):
         self.skip_connection = object_relation_cfg.SKIP_CONNECTION
         self.pooled_feature_dim = pooled_feature_dim
         self.boxip_feature_dim = ip_feature_dim
+        # self.enhanced_roi_feature_dim = self.pooled_feature_dim + self.boxip_feature_dim
+        if ip_feature_dim is not None:
+            self.pooled_feature_dim += ip_feature_dim
         
         # global feature => node feature diff
         # edge feature => box diff
         # GNN F.append => node feature append
 
         if self.global_information:
-            # global_mlp_input_dim = pooled_feature_dim + 7 if self.global_information.CONCATENATED else 7
-            global_mlp_input_dim = pooled_feature_dim + self.boxip_feature_dim if self.global_information.CONCATENATED else self.boxip_feature_dim
+            global_mlp_input_dim = pooled_feature_dim + 7 if self.global_information.CONCATENATED else 7
+            # global_mlp_input_dim = pooled_feature_dim + self.boxip_feature_dim if self.global_information.CONCATENATED else self.boxip_feature_dim
+            # global_mlp_input_dim = self.enhanced_roi_feature_dim + 7 if self.global_information.CONCATENATED else 7
             self.global_info_mlp = build_mlp(global_mlp_input_dim, self.global_information.MLP_LAYERS, activation='ReLU', bn=True, drop_out=self.drop_out)
         
         if not self.global_information:
             gnn_input_dim = pooled_feature_dim
+            # gnn_input_dim = self.enhanced_roi_feature_dim
         else:
             gnn_input_dim = self.global_mlp[-1] if self.global_information.CONCATENATED else (self.global_mlp[-1] + self.pooled_feature_dim)
+            # gnn_input_dim = self.global_mlp[-1] if self.global_information.CONCATENATED else (self.global_mlp[-1] + self.enhanced_roi_feature_dim)
         
         conv_layer_list = []
         for i in range(len(self.gnn_layers)):
@@ -84,10 +90,10 @@ class GNN(nn.Module):
             else:
                 input_dim = self.gnn_layers[i-1]
 
-            # edge_dim = (7 if self.graph_conv.EDGE_EMBEDDING else 0)
-            edge_dim = (self.boxip_feature_dim if self.graph_conv.EDGE_EMBEDDING else 0)
+            edge_dim = (7 if self.graph_conv.EDGE_EMBEDDING else 0)
+            # edge_dim = (self.boxip_feature_dim if self.graph_conv.EDGE_EMBEDDING else 0)
             if self.graph_conv.NAME == "EdgeConv":
-                curr_conv_layer_list.append(EdgeConv(2*input_dim+edge_dim, self.gnn_layers[i], drop_out=self.drop_out,  skip_connection=self.graph_conv.SKIP_CONNECTION))
+                curr_conv_layer_list.append(EdgeConv(2*input_dim+edge_dim, self.gnn_layers[i], drop_out=self.drop_out, skip_connection=self.graph_conv.SKIP_CONNECTION))
             elif self.graph_conv.NAME == "GATConv": # Graph Attention
                 # layer according to tg example: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/gat.py
                 curr_conv_layer_list.append(nn.Dropout(p=self.drop_out))
@@ -130,21 +136,24 @@ class GNN(nn.Module):
         # BxNx7
         proposal_boxes = batch_dict['rois'].view(B*N,7)  # (100, 7)
         # BxNx28
-        proposal_boxes_ip = batch_dict['ip_features'].view(B*N, self.boxip_feature_dim)  # (100, 28) instance properties: box param & raw_pt distribution
+        proposal_boxes_ip = batch_dict['roi_ip_features'].view(B*N, self.boxip_feature_dim)  # (100, 128)
         # BxN
         proposal_labels = batch_dict['roi_labels'].view(B*N)  # (100)
         # BxNxC
         pooled_features = batch_dict['pooled_features'].view(B*N,C)  # (100, 256)
+
+        enhanced_roi_feature = torch.cat([pooled_features, proposal_boxes_ip], dim=1)
         
 
         if self.global_information:
             if self.global_information.CONCATENATED:
                 # pooled_features_with_global_info = torch.cat([pooled_features, proposal_boxes], dim=1)
-                pooled_features_with_global_info = torch.cat([pooled_features, proposal_boxes_ip], dim=1)
+                # pooled_features_with_global_info = torch.cat([pooled_features, proposal_boxes_ip], dim=1) # WRONG!!!!
+                pooled_features_with_global_info = torch.cat([enhanced_roi_feature, proposal_boxes], dim=1)
                 pooled_features = self.global_info_mlp(pooled_features_with_global_info)
             else:
-                # embedded_global_information = self.global_info_mlp(proposal_boxes)
-                embedded_global_information = self.global_info_mlp(proposal_boxes_ip)
+                embedded_global_information = self.global_info_mlp(proposal_boxes)
+                # embedded_global_information = self.global_info_mlp(proposal_boxes_ip) # WRONG!!!!
                 pooled_features = torch.cat([pooled_features, embedded_global_information], dim=1)
         
         if self.graph_cfg.SPACE == 'R3':
@@ -152,9 +161,10 @@ class GNN(nn.Module):
             edge_index = self.get_edges(proposal_boxes[:,:3], proposal_labels, (B, N, C))
         elif self.graph_cfg.SPACE == 'Instance':
             assert self.graph_cfg.DYNAMIC == False, 'Distance should be measured in feature space if the graph is created dynamically'
-            edge_index = self.get_edges(proposal_boxes_ip[:,:3], proposal_labels, (B, N, C))  # edge_generate only base on roi_center_xyz
+            edge_index = self.get_edges(proposal_boxes[:,:3], proposal_labels, (B, N, C))  # edge_generate only base on roi_center_xyz
         elif self.graph_cfg.SPACE == 'Feature':
-            edge_index = self.get_edges(pooled_features, proposal_labels, (B, N, C))
+            # edge_index = self.get_edges(pooled_features, proposal_labels, (B, N, C))
+            edge_index = self.get_edges(enhanced_roi_feature, proposal_labels, (B, N, C))
         else:
             raise NotImplemented('Distance space was {} but should be R3 or INSTANCE or FEATURE'.format(self.graph_cfg.SPACE))
         
@@ -163,11 +173,13 @@ class GNN(nn.Module):
         edge_attr = None
         if self.graph_conv.EDGE_EMBEDDING:
             from_node, to_node = edge_index
-            # edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]  # (1600, 7)
-            edge_attr = proposal_boxes_ip[from_node] - proposal_boxes_ip[to_node]  # (1600, 28)
+            edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]  # (1600, 7)
+            # edge_attr = proposal_boxes_ip[from_node] - proposal_boxes_ip[to_node]  # (1600, 128)
         
-        gnn_features = [pooled_features]  # [tensor(100, 256)]
-        x = pooled_features  # tensor (100, 256)
+        # gnn_features = [pooled_features]  # [tensor(100, 256)]
+        gnn_features = [enhanced_roi_feature]  # [tensor(100, 256)]
+        # x = pooled_features  # tensor (100, 256)
+        x = enhanced_roi_feature
         for module_list in self.gnn:
             for module in module_list:
                 if isinstance(module, (EdgeConv, tg.nn.GATConv)):
@@ -179,8 +191,8 @@ class GNN(nn.Module):
                 edge_index = self.get_edges(x, proposal_labels, (B, N, None))
                 if edge_attr is not None:
                     from_node, to_node = edge_index
-                    # edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]
-                    edge_attr = proposal_boxes_ip[from_node] - proposal_boxes_ip[to_node]  # (1600, 28)
+                    edge_attr = proposal_boxes[from_node] - proposal_boxes[to_node]
+                    # edge_attr = proposal_boxes_ip[from_node] - proposal_boxes_ip[to_node]  # (1600, 28)
 
         if self.skip_connection:
             batch_dict['related_features'] = torch.cat(gnn_features, dim=-1)  # (100, 1280) i.e. (100, 256x5 GNNlayers)
@@ -220,20 +232,33 @@ class GNN(nn.Module):
 
 if __name__ == '__main__':
     from easydict import EasyDict as edict
-    # N=3 Proposals
-    rois = torch.tensor([
-        [[0, 0, 0, 0, 0, 0, 0], [2, 2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3, 3]]
-    ], dtype=torch.float32)
-    # 1x3x512
-    pooled_features = torch.rand((1, 3, 256), dtype=torch.float32)
-    proposal_labels = torch.tensor([
-        [0, 0, 1]
-    ], dtype=torch.int64)
+    # # N=3 Proposals
+    # rois = torch.tensor([
+    #     [[0, 0, 0, 0, 0, 0, 0], [2, 2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3, 3]]
+    # ], dtype=torch.float32)
+    # # 1x3x512
+    # pooled_features = torch.rand((1, 3, 256), dtype=torch.float32)
+    # proposal_labels = torch.tensor([
+    #     [0, 0, 1]
+    # ], dtype=torch.int64)
+
+    # proposal_boxes_ip = torch.rand((1, 3, 128), dtype=torch.float32)
+
+    B=2
+    N=100
+    pooled_feature_dim=256
+    roi_ip_feature_dim=128
+
+    rois = torch.rand((B*N, 7), dtype=torch.float32)
+    pooled_features = torch.rand((B, N, pooled_feature_dim), dtype=torch.float32)
+    proposal_labels = torch.rand((1, B*N), dtype=torch.float32)
+    proposal_boxes_ip = torch.rand((B, N, roi_ip_feature_dim), dtype=torch.float32)
 
     batch_dict = {
         'rois': rois,  # Random positions for 10 batches of 100 proposals each
         'pooled_features': pooled_features,  # Random 16-dimensional features for 10 batches of 100 proposals each
-        'roi_labels': proposal_labels  # Random labels for 10 batches of 100 proposals each
+        'roi_labels': proposal_labels,  # Random labels for 10 batches of 100 proposals each
+        'roi_ip_features': proposal_boxes_ip,
     }
 
     cfg_radius = edict({
