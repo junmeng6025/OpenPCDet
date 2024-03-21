@@ -10,6 +10,8 @@ from ...utils import common_utils
 from .roi_head_template import RoIHeadTemplate
 from ...ops.roiaware_pool3d.roiaware_pool3d_utils import points_in_boxes_gpu
 
+import os
+
 ROI_PCL_PROP = [ 
     'x', 'y', 'z', 'refl'
 ]
@@ -19,6 +21,16 @@ ROI_PCL_PROP = [
 # ]
 
 EXPORT_PTSROI = False
+VIS_PATH = "/root/OpenPCDet/output/vis/kitti/debug"
+
+def min_max_norm(array, dim):
+    assert isinstance(array, np.ndarray), "arr is not a NumPy array"
+    assert isinstance(dim, int), "dim is not an int"
+    min_vals = np.min(array, axis=dim, keepdims=True)
+    max_vals = np.max(array, axis=dim, keepdims=True)
+    normalized = (array - min_vals) / (max_vals - min_vals)
+    return normalized
+
 
 
 # TEST1: Build MLP
@@ -44,8 +56,9 @@ class ROIPointsMLP(nn.Module):
         # self.g_cfg = cfg.GACE
         self.g_cfg = edict({
             'MODEL':{
-                'H_I_HIDDEN_DIM': 256,
-                'H_I_OUTPUT_DIM': 128
+                'H_I_HIDDEN_DIM': 64,
+                'H_I_OUTPUT_DIM': 128,
+                # 'hidden_dims': [64, 64, 128],
             }
         })
         self.H_I = nn.Sequential(
@@ -60,6 +73,13 @@ class ROIPointsMLP(nn.Module):
             nn.BatchNorm2d(self.g_cfg.MODEL.H_I_OUTPUT_DIM),
             nn.ReLU()
         )
+
+    def init_weights(self, weight_init='xavier'):
+        if weight_init == 'xavier':
+            init_func = nn.init.xavier_uniform_
+        for layer in self.H_I:
+            if isinstance(layer, nn.Conv2d):
+                init_func(layer.weight)
     
     def forward(self, x):
         return self.H_I(x)
@@ -110,10 +130,10 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
                 if not object_relation_config.GLOBAL_INFORMATION.CONCATENATED:
                     initial_input_dim += self.model_cfg.SHARED_FC[-1]
             else:
-                initial_input_dim = self.model_cfg.SHARED_FC[-1]
+                initial_input_dim = self.model_cfg.SHARED_FC[-1] + self.roi_mlp.get_out_dim() # 256+128=384
             
             if object_relation_config.SKIP_CONNECTION:
-                self.head_input_channels = initial_input_dim + sum(object_relation_config.LAYERS)
+                self.head_input_channels = initial_input_dim + sum(object_relation_config.LAYERS) # ! 1792= 256+ 384*4
             else:
                 if len(object_relation_config.LAYERS) == 0:
                     self.head_input_channels = self.model_cfg.SHARED_FC[-1]
@@ -253,17 +273,22 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
     #     # print("Num roi in 'roi_boxes'=%d; Count in 'pcl_roi'=%d")%(roi_boxes_np.shape[0],roi_count)
     #     return data_tensor, pcl_roi  # (num_roi, 28)
 
-    def roi_pcl_pool(self, batch_dict, box_size_norm=False):
+    def roi_pcl_pool(self, batch_dict, box_size_norm=False, export_pclroi=False, save_pclroi=False, norm=False):
         """
         Args:
-            pcl: (num_rawpts, 4)  [x, y, z, refl]
-            roi_boxes: (B, num_rois, 7 + C)
+            batch_dict:
+                batch_size:
+                points: (B x num_raw_pts, 5)  [bs_idx, x, y, z, refl]
+                rois: (B, num_rois, 7 + C)  [cx, cy, cz, w, h, l, theta]
+                gt_boxes: (B, ?, 8)  [cx, cy, cz, w, h, l, theta, cls]
         Returns:
-            roi_ip_features: RoI Instance-specific Properties, learned from pcls within each proposal box
+            roi_ip_features: (BxN, 128) RoI Instance-specific Properties, learned from pcls within each proposal box
         """
+        
         batch_size = batch_dict['batch_size']
         rois_batch = batch_dict['rois']  # (B, num_rois, 7)
         pcl_batch = batch_dict['points'] # (B x num_raw_pts, 5); [bs_id, x, y, z, refl]
+        gtbox_batch = batch_dict['gt_boxes']
         # roi_boxes = (rois.view(-1, rois.shape[-1]))[:, :7]  # (B x num_roi, 7)=(256, 7)
         # roi_boxes = roi_boxes.view(batch_size, -1, rois.shape[-1])  # (B, num_rois, 7)
 
@@ -275,24 +300,66 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
 
         # roi_ip_features = torch.zeros(roi_boxes_np.shape[0], self.roi_mlp.get_out_dim()).cuda()
 
+        # For Debug: checking batch matching =======================================================================
+        # if export_pclroi:
+        #     # pcl_roi_batch = torch.zeros(pcl_batch.shape[0], 6)  # (num_raw_pts, 6) 
+        #     # # [bs_id, x, y, z, refl, roi_id], 1 row to concatenate
+        #     # pcl_roi_batch[:, -1] = -1
+        #     pcl_roi_batch = np.zeros((1, 6))  # (num_raw_pts, 6) 
+        #     # [bs_id, x, y, z, refl, roi_id], 1 row to concatenate
+        #     pcl_roi_batch[0, -1] = -1
+        #     roi_ip_boxes = torch.zeros(batch_size, rois_batch.shape[1], 7).cuda(rois_batch.device)
+        # else:
+        #     pcl_roi_batch = None
+        #     roi_ip_boxes = None
+        # For Debug: checking batch matching ========================================================================
+        
         roi_ip_features = torch.zeros(batch_size, rois_batch.shape[1], self.roi_mlp.get_out_dim()).cuda(rois_batch.device)  # (B, num_roi, RoImlp_out_dim)
+        # tensor_nonzero = torch.nonzero(roi_ip_features).size(0)
+        # print("DEBUG--INIT: IP_features nonZero %d"%tensor_nonzero)
+        
         for batch_idx in range(batch_size):
             pcl = pcl_batch[pcl_batch[:, 0] == batch_idx][:, 1:]
             roi = rois_batch[batch_idx]
+            # print("Batch %d: %d pts, %d rois"%(batch_idx, pcl.shape[0], roi.shape[0]))
+
+            # For Debug: checking batch matching ===================================
+            # if export_pclroi:
+            #     pcl_cp = deepcopy(pcl.cpu().numpy())
+            #     pcl_roi = np.zeros((pcl_cp.shape[0], 6))  # [bs_id, x, y, z, refl, roi_id]
+            #     pcl_roi[:, -1] = -1  # initialize roi_id = -1
+            #     pcl_roi[:, 0] = batch_idx  # batch_id = batch_idx
+            # else:
+            #     pcl_roi = None
+            # For Debug: checking batch matching ===================================
 
             roi_boxes_np = deepcopy(roi.cpu().numpy())
+            # roi_boxes_np = deepcopy(roi[::5, :].cpu().numpy())  # DEBUG vis
             roi_boxes_np[:, 6] = np.mod(roi_boxes_np[:, 6], 2*np.pi)
 
             for i in range(roi_boxes_np.shape[0]):
                 box = deepcopy(roi_boxes_np[i, :])
                 mask = points_in_boxes_gpu(pcl[None, :, :3], torch.from_numpy(box[None, None, :]).cuda())
-                mask = mask[0, :] == 0  # (num_raw_pts)=(60585) [T/F]
-                
+                """
+                points_in_boxes_gpu
+                :param points: (B, M, 3)
+                :param boxes: (B, T, 7), num_valid_boxes <= T
+                :return box_idxs_of_pts: (B, M), default background = -1
+                """
+                # for single box input, box_id is only 0
+                mask = mask[0, :] == 0  # (num_raw_pts) [T/F]
                 pcl_in_box = deepcopy(pcl[mask, :].cpu().numpy())  # (num_pts_in_roi, 4)=(40, 4)
-
                 if pcl_in_box.shape[0]<=1:
+                    # print("DEBUG: Batch %d, RoI: %d -- Skipped"%(batch_idx, i))
                     continue  # skip empty and 1-pt RoIs
-
+                
+                # For Debug: checking batch matching ===================================
+                # if pcl_roi is not None:
+                #     mask_cpu = mask.cpu().numpy()
+                #     pcl_roi[mask_cpu, -1] = i  # assert roi_id
+                #     pcl_roi[mask_cpu, 1:5] = pcl_in_box[:, :]  # write pcl values
+                # For Debug: checking batch matching ===================================
+                    
                 if self.get_coord_diff:
                     pcl_in_box_rel = deepcopy(pcl_in_box[:, :3]) # only copy xyz
                     # move to center
@@ -307,18 +374,33 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
                         pcl_in_box_rel[:, :3] /= box[3:6]
                         # box[3:6] = 1
                     pcl_in_box = np.concatenate((pcl_in_box, pcl_in_box_rel), axis=1)
+                
+                if norm:
+                    pcl_in_box = min_max_norm(pcl_in_box, dim=1)
                     
                 pcl_in_box_tensor = torch.from_numpy(pcl_in_box).view(pcl_in_box.shape[0], pcl_in_box.shape[1], 1, 1).cuda()
-                pt_features = self.roi_mlp.H_I(pcl_in_box_tensor)  # [num_pts_in_roi, fea_dim, 1, 1]
+                pt_features = self.roi_mlp.H_I(pcl_in_box_tensor.contiguous())  # [num_pts_in_roi, fea_dim, 1, 1]
+                assert pt_features.shape[0] == pcl_in_box.shape[0]
+                
                 roi_ip_feature, _ = torch.max(pt_features, axis=0)  # max pooling within RoI -> [fea_dim, 1, 1]
-
+                #DEBUG
+                # roi_ip_nonzero = torch.nonzero(roi_ip_feature).size(0)
+                # pt_nonzero = torch.nonzero(pt_features).size(0)
+                # print("DEBUG: Batch %d, RoI: %d -- IP_features nonZero %d/128; befor MaxPooling: %d/%d*128"%(batch_idx, i, roi_ip_nonzero, pt_nonzero, pt_features.shape[0]))
+                #DEBUG
                 roi_ip_features[batch_idx, i, :] = roi_ip_feature[:, 0, 0]
-        
+
+            # if export_pclroi and save_pclroi:
+            #     torch.save(torch.from_numpy(pcl_roi).cuda(), os.path.join(VIS_PATH, 'pcl_roi_{}.pt'.format(int(batch_idx))))  # [bs_id, x, y, z, refl, roi_id]
+            #     # torch.save(roi, os.path.join(VIS_PATH, 'roi_boxes_{}.pt'.format(int(batch_idx))))  # [cx, cy, cz, w, h, l, theta]
+            #     torch.save(torch.from_numpy(roi_boxes_np).cuda(), os.path.join(VIS_PATH, 'roi_boxes_{}.pt'.format(int(batch_idx))))  # [cx, cy, cz, w, h, l, theta]
+            #     torch.save(pcl, os.path.join(VIS_PATH, 'rawpts_{}.pt'.format(int(batch_idx))))
+            #     gtboxes = gtbox_batch[batch_idx, :, :7]
+            #     torch.save(gtboxes, os.path.join(VIS_PATH, 'gtboxes_{}.pt'.format(int(batch_idx))))
+
         roi_ip_features = roi_ip_features.view(-1, self.roi_mlp.get_out_dim())
         return roi_ip_features
 
-
-        
         # for i in range(roi_boxes_np.shape[0]):
         #     box = deepcopy(roi_boxes_np[i, :])
         #     mask = points_in_boxes_gpu(pcl[None, :, :3], torch.from_numpy(box[None, None, :]).cuda())
@@ -381,14 +463,14 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         )  # (BxN, 6x6x6, 3)
         global_roi_grid_points = global_roi_grid_points.view(batch_size, -1, 3)  # (B, Nx6x6x6, 3)
 
-        xyz = point_coords[:, 1:4]
-        xyz_batch_cnt = xyz.new_zeros(batch_size).int()
-        batch_idx = point_coords[:, 0]
+        xyz = point_coords[:, 1:4]  # (B*1024, 3)  1024 keypoints pro frame
+        xyz_batch_cnt = xyz.new_zeros(batch_size).int()  #(B)
+        batch_idx = point_coords[:, 0]  # (num_keypoints)
         for k in range(batch_size):
-            xyz_batch_cnt[k] = (batch_idx == k).sum()
+            xyz_batch_cnt[k] = (batch_idx == k).sum()  # (B)
 
-        new_xyz = global_roi_grid_points.view(-1, 3)
-        new_xyz_batch_cnt = xyz.new_zeros(batch_size).int().fill_(global_roi_grid_points.shape[1])
+        new_xyz = global_roi_grid_points.view(-1, 3)  # (BxNx6x6x6, 3)
+        new_xyz_batch_cnt = xyz.new_zeros(batch_size).int().fill_(global_roi_grid_points.shape[1])  # (B)
         pooled_points, pooled_features = self.roi_grid_pool_layer(
             xyz=xyz.contiguous(),
             xyz_batch_cnt=xyz_batch_cnt,
@@ -454,12 +536,18 @@ class PVRCNNHeadRelation(RoIHeadTemplate):
         pooled_features = self.shared_fc_layer(pooled_features.view(batch_size_rcnn, -1, 1))  # (BxN, C', 1)=(100, 256, 1)
         batch_dict['pooled_features'] = pooled_features.view(-1, N, self.model_cfg.SHARED_FC[-1])  # (B, N, C')
 
+        # count_nonzero = torch.nonzero(pooled_features).size(0)
+        # print("DEBUG: pooled_features: non-zero elements: %d / of total %s"%(count_nonzero, pooled_features.size(0)*pooled_features.size(1)))
+
+        # roi_ip_features = self.roi_pcl_pool(batch_dict)
         roi_ip_features = self.roi_pcl_pool(batch_dict)
         batch_dict['roi_ip_features'] = roi_ip_features.view(-1, N, self.roi_mlp.get_out_dim())  # (2, 128, 128)
 
-        self.forward_ret_dict = targets_dict
+        # count_nonzero = torch.nonzero(roi_ip_features).size(0)
+        # print("DEBUG roi_ip_features: non-zero elements: %d / of total %s"%(count_nonzero, roi_ip_features.size(0)*roi_ip_features.size(1)))
 
-        
+        self.forward_ret_dict = targets_dict
+ 
         # rcnn_cls = self.cls_layers(shared_features).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, 1 or 2)
         # rcnn_reg = self.reg_layers(shared_features).transpose(1, 2).contiguous().squeeze(dim=1)  # (B, C)
 

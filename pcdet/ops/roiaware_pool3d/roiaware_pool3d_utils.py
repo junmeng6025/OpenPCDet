@@ -31,11 +31,11 @@ def points_in_boxes_gpu(points, boxes):
     :param boxes: (B, T, 7), num_valid_boxes <= T
     :return box_idxs_of_pts: (B, M), default background = -1
     """
-    assert boxes.shape[0] == points.shape[0]
+    assert boxes.shape[0] == points.shape[0] # batch_size check
     assert boxes.shape[2] == 7 and points.shape[2] == 3
     batch_size, num_points, _ = points.shape
 
-    box_idxs_of_pts = points.new_zeros((batch_size, num_points), dtype=torch.int).fill_(-1)
+    box_idxs_of_pts = points.new_zeros((batch_size, num_points), dtype=torch.int).fill_(-1)  # init as -1
     roiaware_pool3d_cuda.points_in_boxes_gpu(boxes.contiguous(), points.contiguous(), box_idxs_of_pts)
 
     return box_idxs_of_pts

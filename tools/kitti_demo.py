@@ -65,11 +65,13 @@ def main(cfg_path, model_path, output_path, num_scenes, save_3d=False, save_roi=
                     torch.save(pred_dicts[0]['gnn_edges_final'],os.path.join(vis_path, 'gnn_edges{}.pt'.format(int(data_dict['frame_id']))))
                     json.dump(pred_dicts[0]['edge_to_pred'] , open(os.path.join(vis_path, 'edge_to_predict{}.json'.format(int(data_dict['frame_id']))), 'w'))
                 if save_roi:
-                    pcl_roi = data_dict['pcl_roi']
-                    mask_pclroi = pcl_roi[:, 0] != -1
-                    pclroi_overlap = pcl_roi[mask_pclroi, 1:]
-                    torch.save(pclroi_overlap, os.path.join(vis_path, 'roipcl_{}.pt'.format(int(data_dict['frame_id']))))
-                    torch.save((data_dict['rois'].view(-1, data_dict['rois'].shape[-1]))[:, :7], os.path.join(vis_path, 'roibox_{}.pt'.format(int(data_dict['frame_id']))))
+                    pcl_roi = data_dict['pcl_roi_batch']  # [bs_id, x, y, z, refl, roi_id]
+                    mask_pclroi = pcl_roi[:, -1] != -1
+                    pclroi_overlap = pcl_roi[mask_pclroi, :]
+                    torch.save(pclroi_overlap, os.path.join(vis_path, 'pclroi_{}.pt'.format(int(data_dict['frame_id']))))
+                    roi_boxes = data_dict['rois'].view(-1, data_dict['rois'].shape[-1])[:, :7]
+                    torch.save(roi_boxes, os.path.join(vis_path, 'roibox_{}.pt'.format(int(data_dict['frame_id']))))
+                    # torch.save(data_dict['rois'].view(-1, data_dict['rois'].shape[-1])[:, :7], os.path.join(vis_path, 'roibox_{}.pt'.format(int(data_dict['frame_id']))))
             else:
                 # fig = V.draw_scenes(
                 #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
@@ -89,11 +91,11 @@ def main(cfg_path, model_path, output_path, num_scenes, save_3d=False, save_roi=
 
 if __name__ == '__main__':
 
-    output_path = "../output/vis/kitti/pv-rcnn-relation-ip/all_class/20240220/ep80"
-    model_path = "../output/kitti_models/pv_rcnn_relation/train-AllClass-k16-Instance/20240220-144507/ckpt/checkpoint_epoch_80.pth"
-    cfg_path = "cfgs/kitti_models/pv_rcnn_relation.yaml"
+    output_path = "../output/vis/kitti/pv-rcnn-relation-IPmlp/car_only/20240312/ep74"
+    model_path = "../output/kitti_models/pv_rcnn_relation_car_class_only/train-CarClass-k16-IP_mlp_bs2/20240311-183601/ckpt/checkpoint_epoch_74.pth"
+    cfg_path = "cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml"
 
     NUMBER_OF_SCENES = 10
 
     # main(cfg_path, full_model_path, data_path, save_3d=True, tag=tag)
-    main(cfg_path, model_path, output_path, num_scenes=NUMBER_OF_SCENES, save_3d=False, save_roi=True)
+    main(cfg_path, model_path, output_path, num_scenes=NUMBER_OF_SCENES, save_3d=True, save_roi=True)

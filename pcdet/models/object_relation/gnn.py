@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch_geometric as tg
 import torch.nn.functional as F
-from utils import build_mlp  # TODO: add . before utils after Debug
+from .utils import build_mlp  # TODO: delete . before utils for Debug
 # from ..roi_heads.pvrcnn_head_relation import ROI_PCL_PROP
 # import torch_scatter
 
@@ -34,20 +34,20 @@ class EdgeConv(tg.nn.MessagePassing):
         out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
         out = self.batch_norm(out)
         if self.skip_connection:
-            return out + x
+            return out + x  # out:(200, 384) x:(200, 384)
         return out  
 
     def message(self, x_i, x_j, edge_attr=None):
         if edge_attr is not None:
-            x = torch.cat((x_j - x_i, x_i, edge_attr), dim=-1)  # 384+ 384+ 7= 775 / 256+ 256+ 7= 519
+            x = torch.cat((x_j - x_i, x_i, edge_attr), dim=-1)  # (3200, 775); 775= 384+ 384+ 7  EdgeMsg+ NodeFeature+ EdgeAttr -> NodeFeature'
         else:
             x = torch.cat((x_j - x_i, x_i), dim=-1)
-        x = self.mlp(x)
+        x = self.mlp(x)  # 2*384+7 -> 384
         return x
 
 
 class GNN(nn.Module):
-    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256, ip_feature_dim=128):
+    def __init__(self, object_relation_cfg, number_classes=3, pooled_feature_dim=256, ip_feature_dim=128):  #TODO: input batch_dict, get dims
         super(GNN, self).__init__()
         self.graph_cfg = object_relation_cfg.GRAPH
         self.graph_conv = object_relation_cfg.GRAPH.CONV
@@ -64,19 +64,21 @@ class GNN(nn.Module):
         # self.enhanced_roi_feature_dim = self.pooled_feature_dim + self.boxip_feature_dim
         if ip_feature_dim is not None:
             self.pooled_feature_dim += ip_feature_dim
+        if self.skip_connection:
+            self.gnn_layers = [self.pooled_feature_dim for _ in range(len(self.gnn_layers))]
         
         # global feature => node feature diff
         # edge feature => box diff
         # GNN F.append => node feature append
 
         if self.global_information:
-            global_mlp_input_dim = pooled_feature_dim + 7 if self.global_information.CONCATENATED else 7
+            global_mlp_input_dim = self.pooled_feature_dim + 7 if self.global_information.CONCATENATED else 7
             # global_mlp_input_dim = pooled_feature_dim + self.boxip_feature_dim if self.global_information.CONCATENATED else self.boxip_feature_dim
             # global_mlp_input_dim = self.enhanced_roi_feature_dim + 7 if self.global_information.CONCATENATED else 7
             self.global_info_mlp = build_mlp(global_mlp_input_dim, self.global_information.MLP_LAYERS, activation='ReLU', bn=True, drop_out=self.drop_out)
         
         if not self.global_information:
-            gnn_input_dim = pooled_feature_dim
+            gnn_input_dim = self.pooled_feature_dim
             # gnn_input_dim = self.enhanced_roi_feature_dim
         else:
             gnn_input_dim = self.global_mlp[-1] if self.global_information.CONCATENATED else (self.global_mlp[-1] + self.pooled_feature_dim)
@@ -94,6 +96,7 @@ class GNN(nn.Module):
             # edge_dim = (self.boxip_feature_dim if self.graph_conv.EDGE_EMBEDDING else 0)
             if self.graph_conv.NAME == "EdgeConv":
                 curr_conv_layer_list.append(EdgeConv(2*input_dim+edge_dim, self.gnn_layers[i], drop_out=self.drop_out, skip_connection=self.graph_conv.SKIP_CONNECTION))
+                #TODO: 2*input_dim+edge_dim: x = torch.cat(x_j - x_i, x_i, edge_attr)
             elif self.graph_conv.NAME == "GATConv": # Graph Attention
                 # layer according to tg example: https://github.com/pyg-team/pytorch_geometric/blob/master/examples/gat.py
                 curr_conv_layer_list.append(nn.Dropout(p=self.drop_out))
@@ -195,9 +198,9 @@ class GNN(nn.Module):
                     # edge_attr = proposal_boxes_ip[from_node] - proposal_boxes_ip[to_node]  # (1600, 28)
 
         if self.skip_connection:
-            batch_dict['related_features'] = torch.cat(gnn_features, dim=-1)  # (100, 1280) i.e. (100, 256x5 GNNlayers)
+            batch_dict['related_features'] = torch.cat(gnn_features, dim=-1)  # (200, 1920=384x5) i.e. (BxN, gnn_dim x GNNlayers)
         else:
-            batch_dict['related_features'] = x  # (100, 256)
+            batch_dict['related_features'] = x  # (BxN, 384)
 
         return batch_dict
 
@@ -286,7 +289,8 @@ if __name__ == '__main__':
             "CONNECT_ONLY_SAME_CLASS": False,
             'SPACE': 'R3',
         },
-        'LAYERS': [256, 256, 256],
+        'LAYERS': [256, 256, 256, 256],
+        # 'LAYERS': [384, 384, 384, 384],
         # 'GLOBAL_INFORMATION': {
         #     'MLP_LAYERS': [256, 256, 256]
         # }
@@ -300,5 +304,6 @@ if __name__ == '__main__':
 
     batch_dict = model(batch_dict)
     edges = batch_dict['gnn_edges']
+    print(edges)
     assert edges.shape[0] == 2
-    assert edges.shape[1] == 6
+    assert edges.shape[1] == B*N*16
