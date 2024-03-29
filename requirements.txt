@@ -11,3 +11,4 @@ torchvision
 SharedArray
 opencv-python
 pyquaternion
+protobuf==3.19.6

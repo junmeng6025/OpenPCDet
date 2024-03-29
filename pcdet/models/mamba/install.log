@@ -1,0 +1,679 @@
+root@6664b504659f:~/OpenPCDet# pip list
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Package                      Version
+---------------------------- -------------
+absl-py                      1.4.0
+addict                       2.4.0
+ansi2html                    1.8.0
+apptools                     5.2.1
+argcomplete                  3.1.1
+asttokens                    2.2.1
+astunparse                   1.6.3
+attrs                        23.1.0
+av                           10.0.0
+av2                          0.2.1
+backcall                     0.2.0
+cachetools                   5.3.1
+ccimport                     0.4.2
+certifi                      2023.7.22
+charset-normalizer           3.2.0
+click                        8.1.7
+cmake                        3.27.2
+colorlog                     6.7.0
+comm                         0.1.4
+ConfigArgParse               1.7
+configobj                    5.0.8
+contourpy                    1.1.0
+cumm-cu117                   0.4.11
+cycler                       0.11.0
+dash                         2.13.0
+dash-core-components         2.0.0
+dash-html-components         2.0.0
+dash-table                   5.0.0
+decorator                    5.1.1
+distlib                      0.3.7
+easydict                     1.10
+envisage                     7.0.3
+executing                    1.2.0
+fastjsonschema               2.18.0
+filelock                     3.12.3
+fire                         0.5.0
+Flask                        2.2.5
+flatbuffers                  23.5.26
+fonttools                    4.42.1
+gast                         0.4.0
+google-auth                  2.22.0
+google-auth-oauthlib         0.4.6
+google-pasta                 0.2.0
+grpcio                       1.57.0
+h5py                         3.10.0
+idna                         3.4
+imageio                      2.31.2
+importlib-metadata           6.8.0
+importlib-resources          6.0.1
+iotop                        0.6
+ipython                      8.12.2
+ipywidgets                   8.1.0
+itsdangerous                 2.1.2
+jedi                         0.19.0
+Jinja2                       3.1.2
+joblib                       1.3.2
+jsonschema                   4.19.0
+jsonschema-specifications    2023.7.1
+jupyter_core                 5.3.1
+jupyterlab-widgets           3.0.8
+keras                        2.11.0
+kiwisolver                   1.4.5
+kornia                       0.6.5
+lark                         1.1.7
+lazy_loader                  0.3
+libclang                     16.0.6
+lit                          16.0.6
+llvmlite                     0.40.1
+Markdown                     3.4.4
+markdown-it-py               3.0.0
+MarkupSafe                   2.1.3
+matplotlib                   3.7.2
+matplotlib-inline            0.1.6
+mayavi                       4.8.1
+mdurl                        0.1.2
+mpmath                       1.3.0
+nbformat                     5.7.0
+nest-asyncio                 1.5.7
+networkx                     3.1
+ninja                        1.11.1
+nox                          2023.4.22
+numba                        0.57.1
+numpy                        1.24.4
+nvidia-cublas-cu11           11.10.3.66
+nvidia-cuda-cupti-cu11       11.7.101
+nvidia-cuda-nvrtc-cu11       11.7.99
+nvidia-cuda-runtime-cu11     11.7.99
+nvidia-cudnn-cu11            8.5.0.96
+nvidia-cufft-cu11            10.9.0.58
+nvidia-curand-cu11           10.2.10.91
+nvidia-cusolver-cu11         11.4.0.1
+nvidia-cusparse-cu11         11.7.4.91
+nvidia-nccl-cu11             2.14.3
+nvidia-nvtx-cu11             11.7.91
+oauthlib                     3.2.2
+open3d                       0.17.0
+opencv-python                4.8.0.76
+opt-einsum                   3.3.0
+packaging                    23.1
+pandas                       2.0.3
+parso                        0.8.3
+pccm                         0.4.8
+pcdet                        0.6.0+59c2662
+pexpect                      4.8.0
+pickleshare                  0.7.5
+Pillow                       10.0.0
+pip                          23.2.1
+pkgutil_resolve_name         1.3.10
+platformdirs                 3.10.0
+plotly                       5.16.1
+portalocker                  2.7.0
+prompt-toolkit               3.0.39
+protobuf                     3.19.6
+psutil                       5.9.5
+ptyprocess                   0.7.0
+pure-eval                    0.2.2
+pyarrow                      13.0.0
+pyasn1                       0.5.0
+pyasn1-modules               0.3.0
+pybind11                     2.11.1
+pyface                       8.0.0
+Pygments                     2.16.1
+pyparsing                    3.0.9
+pyproj                       3.5.0
+pyquaternion                 0.9.9
+python-dateutil              2.8.2
+pytz                         2023.3
+PyWavelets                   1.4.1
+PyYAML                       6.0.1
+referencing                  0.30.2
+requests                     2.31.0
+requests-oauthlib            1.3.1
+retrying                     1.3.4
+rich                         13.5.2
+rpds-py                      0.10.0
+rsa                          4.9
+scikit-image                 0.21.0
+scikit-learn                 1.3.0
+scipy                        1.10.1
+setuptools                   68.1.2
+SharedArray                  3.1.0
+six                          1.16.0
+spconv-cu117                 2.3.6
+stack-data                   0.6.2
+sympy                        1.12
+tenacity                     8.2.3
+tensorboard                  2.11.2
+tensorboard-data-server      0.6.1
+tensorboard-plugin-wit       1.8.1
+tensorboardX                 2.6.2.2
+tensorflow                   2.11.0
+tensorflow-estimator         2.11.0
+tensorflow-io-gcs-filesystem 0.34.0
+termcolor                    2.3.0
+threadpoolctl                3.2.0
+tifffile                     2023.7.10
+torch                        2.0.1
+torch-cluster                1.6.3
+torch-geometric              2.3.1
+torch-scatter                2.1.2
+torchaudio                   2.0.2
+torchvision                  0.15.2
+tqdm                         4.66.1
+traitlets                    5.9.0
+traits                       6.4.2
+traitsui                     8.0.0
+triton                       2.0.0
+typing_extensions            4.7.1
+tzdata                       2023.3
+urllib3                      1.26.16
+virtualenv                   20.24.4
+vtk                          9.0.1
+wcwidth                      0.2.6
+Werkzeug                     2.2.3
+wheel                        0.41.2
+widgetsnbextension           4.0.8
+wrapt                        1.16.0
+zipp                         3.16.2
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install packaging
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (23.1)
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install timm==0.4.12
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Collecting timm==0.4.12
+  Obtaining dependency information for timm==0.4.12 from https://files.pythonhosted.org/packages/90/fc/606bc5cf46acac3aa9bd179b3954433c026aaf88ea98d6b19f5d14c336da/timm-0.4.12-py3-none-any.whl.metadata
+  Downloading timm-0.4.12-py3-none-any.whl.metadata (30 kB)
+Requirement already satisfied: torch>=1.4 in /usr/local/lib/python3.8/dist-packages (from timm==0.4.12) (2.0.1)
+Requirement already satisfied: torchvision in /usr/local/lib/python3.8/dist-packages (from timm==0.4.12) (0.15.2)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (11.7.91)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (from torch>=1.4->timm==0.4.12) (2.0.0)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch>=1.4->timm==0.4.12) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch>=1.4->timm==0.4.12) (0.41.2)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch>=1.4->timm==0.4.12) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch>=1.4->timm==0.4.12) (16.0.6)
+Requirement already satisfied: numpy in /usr/local/lib/python3.8/dist-packages (from torchvision->timm==0.4.12) (1.24.4)
+Requirement already satisfied: requests in /usr/local/lib/python3.8/dist-packages (from torchvision->timm==0.4.12) (2.31.0)
+Requirement already satisfied: pillow!=8.3.*,>=5.3.0 in /usr/local/lib/python3.8/dist-packages (from torchvision->timm==0.4.12) (10.0.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch>=1.4->timm==0.4.12) (2.1.3)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->timm==0.4.12) (3.2.0)
+Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->timm==0.4.12) (3.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->timm==0.4.12) (1.26.16)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->timm==0.4.12) (2023.7.22)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch>=1.4->timm==0.4.12) (1.3.0)
+Downloading timm-0.4.12-py3-none-any.whl (376 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 377.0/377.0 kB 4.7 MB/s eta 0:00:00
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: timm
+Successfully installed timm-0.4.12
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install pytest chardet yacs termcolor
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Collecting pytest
+  Obtaining dependency information for pytest from https://files.pythonhosted.org/packages/4d/7e/c79cecfdb6aa85c6c2e3cf63afc56d0f165f24f5c66c03c695c4d9b84756/pytest-8.1.1-py3-none-any.whl.metadata
+  Downloading pytest-8.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting chardet
+  Obtaining dependency information for chardet from https://files.pythonhosted.org/packages/38/6f/f5fbc992a329ee4e0f288c1fe0e2ad9485ed064cac731ed2fe47dcc38cbf/chardet-5.2.0-py3-none-any.whl.metadata
+  Downloading chardet-5.2.0-py3-none-any.whl.metadata (3.4 kB)
+Collecting yacs
+  Obtaining dependency information for yacs from https://files.pythonhosted.org/packages/38/4f/fe9a4d472aa867878ce3bb7efb16654c5d63672b86dc0e6e953a67018433/yacs-0.1.8-py3-none-any.whl.metadata
+  Downloading yacs-0.1.8-py3-none-any.whl.metadata (639 bytes)
+Requirement already satisfied: termcolor in /usr/local/lib/python3.8/dist-packages (2.3.0)
+Collecting iniconfig (from pytest)
+  Obtaining dependency information for iniconfig from https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl.metadata
+  Downloading iniconfig-2.0.0-py3-none-any.whl.metadata (2.6 kB)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from pytest) (23.1)
+Collecting pluggy<2.0,>=1.4 (from pytest)
+  Obtaining dependency information for pluggy<2.0,>=1.4 from https://files.pythonhosted.org/packages/a5/5b/0cc789b59e8cc1bf288b38111d002d8c5917123194d45b29dcdac64723cc/pluggy-1.4.0-py3-none-any.whl.metadata
+  Downloading pluggy-1.4.0-py3-none-any.whl.metadata (4.3 kB)
+Collecting exceptiongroup>=1.0.0rc8 (from pytest)
+  Obtaining dependency information for exceptiongroup>=1.0.0rc8 from https://files.pythonhosted.org/packages/b8/9a/5028fd52db10e600f1c4674441b968cf2ea4959085bfb5b99fb1250e5f68/exceptiongroup-1.2.0-py3-none-any.whl.metadata
+  Downloading exceptiongroup-1.2.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting tomli>=1 (from pytest)
+  Obtaining dependency information for tomli>=1 from https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl.metadata
+  Downloading tomli-2.0.1-py3-none-any.whl.metadata (8.9 kB)
+Requirement already satisfied: PyYAML in /usr/local/lib/python3.8/dist-packages (from yacs) (6.0.1)
+Downloading pytest-8.1.1-py3-none-any.whl (337 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 337.4/337.4 kB 4.4 MB/s eta 0:00:00
+Downloading chardet-5.2.0-py3-none-any.whl (199 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 199.4/199.4 kB 5.6 MB/s eta 0:00:00
+Downloading yacs-0.1.8-py3-none-any.whl (14 kB)
+Downloading exceptiongroup-1.2.0-py3-none-any.whl (16 kB)
+Downloading pluggy-1.4.0-py3-none-any.whl (20 kB)
+Downloading tomli-2.0.1-py3-none-any.whl (12 kB)
+Downloading iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: yacs, tomli, pluggy, iniconfig, exceptiongroup, chardet, pytest
+Successfully installed chardet-5.2.0 exceptiongroup-1.2.0 iniconfig-2.0.0 pluggy-1.4.0 pytest-8.1.1 tomli-2.0.1 yacs-0.1.8
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install submitit tensorboardX
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Collecting submitit
+  Obtaining dependency information for submitit from https://files.pythonhosted.org/packages/eb/db/64ade58ecdd41b2fae6174ab9d3dd62112c0cc0b3f71d5672cd29877f197/submitit-1.5.1-py3-none-any.whl.metadata
+  Downloading submitit-1.5.1-py3-none-any.whl.metadata (8.0 kB)
+Requirement already satisfied: tensorboardX in /usr/local/lib/python3.8/dist-packages (2.6.2.2)
+Collecting cloudpickle>=1.2.1 (from submitit)
+  Obtaining dependency information for cloudpickle>=1.2.1 from https://files.pythonhosted.org/packages/96/43/dae06432d0c4b1dc9e9149ad37b4ca8384cf6eb7700cd9215b177b914f0a/cloudpickle-3.0.0-py3-none-any.whl.metadata
+  Downloading cloudpickle-3.0.0-py3-none-any.whl.metadata (7.0 kB)
+Requirement already satisfied: typing_extensions>=3.7.4.2 in /usr/local/lib/python3.8/dist-packages (from submitit) (4.7.1)
+Requirement already satisfied: numpy in /usr/local/lib/python3.8/dist-packages (from tensorboardX) (1.24.4)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from tensorboardX) (23.1)
+Collecting protobuf>=3.20 (from tensorboardX)
+  Obtaining dependency information for protobuf>=3.20 from https://files.pythonhosted.org/packages/2c/2a/d2741cad35fa5f06d9c59dda3274e5727ca11075dfd7de3f69c100efdcad/protobuf-5.26.1-cp37-abi3-manylinux2014_x86_64.whl.metadata
+  Downloading protobuf-5.26.1-cp37-abi3-manylinux2014_x86_64.whl.metadata (592 bytes)
+Downloading submitit-1.5.1-py3-none-any.whl (74 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 74.7/74.7 kB 1.5 MB/s eta 0:00:00
+Downloading cloudpickle-3.0.0-py3-none-any.whl (20 kB)
+Downloading protobuf-5.26.1-cp37-abi3-manylinux2014_x86_64.whl (302 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 302.8/302.8 kB 1.8 MB/s eta 0:00:00
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: protobuf, cloudpickle, submitit
+  Attempting uninstall: protobuf
+    Found existing installation: protobuf 3.19.6
+    Uninstalling protobuf-3.19.6:
+      Successfully uninstalled protobuf-3.19.6
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+tensorboard 2.11.2 requires protobuf<4,>=3.9.2, but you have protobuf 5.26.1 which is incompatible.
+tensorflow 2.11.0 requires protobuf<3.20,>=3.9.2, but you have protobuf 5.26.1 which is incompatible.
+Successfully installed cloudpickle-3.0.0 protobuf-5.26.1 submitit-1.5.1
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install triton==2.0.0
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (2.0.0)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0) (3.27.2)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0) (3.12.3)
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0) (2.0.1)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0) (16.0.6)
+Requirement already satisfied: typing-extensions>=4.7.1 in /usr/local/lib/python3.8/dist-packages (from filelock->triton==2.0.0) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->triton==2.0.0) (11.7.91)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->triton==2.0.0) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->triton==2.0.0) (0.41.2)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->triton==2.0.0) (2.1.3)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->triton==2.0.0) (1.3.0)
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install causal_conv1d==1.0.0
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Collecting causal_conv1d==1.0.0
+  Downloading causal_conv1d-1.0.0.tar.gz (6.4 kB)
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from causal_conv1d==1.0.0) (2.0.1)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from causal_conv1d==1.0.0) (23.1)
+Requirement already satisfied: ninja in /usr/local/lib/python3.8/dist-packages (from causal_conv1d==1.0.0) (1.11.1)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (11.7.91)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (from torch->causal_conv1d==1.0.0) (2.0.0)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->causal_conv1d==1.0.0) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->causal_conv1d==1.0.0) (0.41.2)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->causal_conv1d==1.0.0) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->causal_conv1d==1.0.0) (16.0.6)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->causal_conv1d==1.0.0) (2.1.3)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->causal_conv1d==1.0.0) (1.3.0)
+Building wheels for collected packages: causal_conv1d
+  Building wheel for causal_conv1d (setup.py) ... done
+  Created wheel for causal_conv1d: filename=causal_conv1d-1.0.0-cp38-cp38-linux_x86_64.whl size=9145439 sha256=39d944eb4cfc95061f0cd698faf8f8b435b0bb3be08df75c3361020428f266b8
+  Stored in directory: /root/.cache/pip/wheels/95/cd/83/baa9888b77b281ac62eafc9b7304f27c1d1460f9f2bc795513
+Successfully built causal_conv1d
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: causal_conv1d
+Successfully installed causal_conv1d-1.0.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install mamba_ssm==1.0.1
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Collecting mamba_ssm==1.0.1
+  Downloading mamba_ssm-1.0.1.tar.gz (28 kB)
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from mamba_ssm==1.0.1) (2.0.1)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from mamba_ssm==1.0.1) (23.1)
+Requirement already satisfied: ninja in /usr/local/lib/python3.8/dist-packages (from mamba_ssm==1.0.1) (1.11.1)
+Collecting einops (from mamba_ssm==1.0.1)
+  Obtaining dependency information for einops from https://files.pythonhosted.org/packages/29/0b/2d1c0ebfd092e25935b86509a9a817159212d82aa43d7fb07eca4eeff2c2/einops-0.7.0-py3-none-any.whl.metadata
+  Downloading einops-0.7.0-py3-none-any.whl.metadata (13 kB)
+Requirement already satisfied: triton in /usr/local/lib/python3.8/dist-packages (from mamba_ssm==1.0.1) (2.0.0)
+Collecting transformers (from mamba_ssm==1.0.1)
+  Obtaining dependency information for transformers from https://files.pythonhosted.org/packages/e2/52/02271ef16713abea41bab736dfc2dbee75e5e3512cf7441e233976211ba5/transformers-4.39.2-py3-none-any.whl.metadata
+  Downloading transformers-4.39.2-py3-none-any.whl.metadata (134 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.8/134.8 kB 900.6 kB/s eta 0:00:00
+Requirement already satisfied: causal_conv1d in /usr/local/lib/python3.8/dist-packages (from mamba_ssm==1.0.1) (1.0.0)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->mamba_ssm==1.0.1) (11.7.91)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton->mamba_ssm==1.0.1) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton->mamba_ssm==1.0.1) (16.0.6)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->mamba_ssm==1.0.1) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->mamba_ssm==1.0.1) (0.41.2)
+Collecting huggingface-hub<1.0,>=0.19.3 (from transformers->mamba_ssm==1.0.1)
+  Obtaining dependency information for huggingface-hub<1.0,>=0.19.3 from https://files.pythonhosted.org/packages/b6/51/d418bb7bb9e32845d3cb4d526012ddf1fea6bb3d55b6a1880698e4b7f19f/huggingface_hub-0.22.1-py3-none-any.whl.metadata
+  Downloading huggingface_hub-0.22.1-py3-none-any.whl.metadata (12 kB)
+Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.8/dist-packages (from transformers->mamba_ssm==1.0.1) (1.24.4)
+Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.8/dist-packages (from transformers->mamba_ssm==1.0.1) (6.0.1)
+Collecting regex!=2019.12.17 (from transformers->mamba_ssm==1.0.1)
+  Obtaining dependency information for regex!=2019.12.17 from https://files.pythonhosted.org/packages/eb/10/4ccc8eed80f11c082a2883d49d4090aa80c7f65704216a529f490cb089b1/regex-2023.12.25-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+  Downloading regex-2023.12.25-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (40 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.9/40.9 kB 542.1 kB/s eta 0:00:00
+Requirement already satisfied: requests in /usr/local/lib/python3.8/dist-packages (from transformers->mamba_ssm==1.0.1) (2.31.0)
+Collecting tokenizers<0.19,>=0.14 (from transformers->mamba_ssm==1.0.1)
+  Obtaining dependency information for tokenizers<0.19,>=0.14 from https://files.pythonhosted.org/packages/0e/d7/3220a4483d240180d0b9423206cc57a4997fd4b49a8393e5ce9a2f7908a9/tokenizers-0.15.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+  Downloading tokenizers-0.15.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.7 kB)
+Collecting safetensors>=0.4.1 (from transformers->mamba_ssm==1.0.1)
+  Obtaining dependency information for safetensors>=0.4.1 from https://files.pythonhosted.org/packages/50/7f/8f6dd5b16cdc9efb01ea6169037c2b4a1e3b433baae78ab14c0f8f88f012/safetensors-0.4.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+  Downloading safetensors-0.4.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.8 kB)
+Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.8/dist-packages (from transformers->mamba_ssm==1.0.1) (4.66.1)
+Collecting fsspec>=2023.5.0 (from huggingface-hub<1.0,>=0.19.3->transformers->mamba_ssm==1.0.1)
+  Obtaining dependency information for fsspec>=2023.5.0 from https://files.pythonhosted.org/packages/93/6d/66d48b03460768f523da62a57a7e14e5e95fdf339d79e996ce3cecda2cdb/fsspec-2024.3.1-py3-none-any.whl.metadata
+  Downloading fsspec-2024.3.1-py3-none-any.whl.metadata (6.8 kB)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->mamba_ssm==1.0.1) (2.1.3)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.8/dist-packages (from requests->transformers->mamba_ssm==1.0.1) (3.2.0)
+Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.8/dist-packages (from requests->transformers->mamba_ssm==1.0.1) (3.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.8/dist-packages (from requests->transformers->mamba_ssm==1.0.1) (1.26.16)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.8/dist-packages (from requests->transformers->mamba_ssm==1.0.1) (2023.7.22)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->mamba_ssm==1.0.1) (1.3.0)
+Downloading einops-0.7.0-py3-none-any.whl (44 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44.6/44.6 kB 1.1 MB/s eta 0:00:00
+Downloading transformers-4.39.2-py3-none-any.whl (8.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.8/8.8 MB 26.9 MB/s eta 0:00:00
+Downloading huggingface_hub-0.22.1-py3-none-any.whl (388 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 388.6/388.6 kB 5.5 MB/s eta 0:00:00
+Downloading regex-2023.12.25-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (777 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 777.0/777.0 kB 7.5 MB/s eta 0:00:00
+Downloading safetensors-0.4.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 6.6 MB/s eta 0:00:00
+Downloading tokenizers-0.15.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.6/3.6 MB 21.3 MB/s eta 0:00:00
+Downloading fsspec-2024.3.1-py3-none-any.whl (171 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 172.0/172.0 kB 2.8 MB/s eta 0:00:00
+Building wheels for collected packages: mamba_ssm
+  Building wheel for mamba_ssm (setup.py) ... done
+  Created wheel for mamba_ssm: filename=mamba_ssm-1.0.1-cp38-cp38-linux_x86_64.whl size=146629955 sha256=f03b2c9ba7ef63b1a718cfbc31be517b053714cec0606b940502dc0435e57e1d
+  Stored in directory: /root/.cache/pip/wheels/d5/0c/83/923a8adcf38a129f1d5de4a3d3fe76545414e486cc370c6c2e
+Successfully built mamba_ssm
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: safetensors, regex, fsspec, einops, huggingface-hub, tokenizers, transformers, mamba_ssm
+Successfully installed einops-0.7.0 fsspec-2024.3.1 huggingface-hub-0.22.1 mamba_ssm-1.0.1 regex-2023.12.25 safetensors-0.4.2 tokenizers-0.15.2 transformers-4.39.2
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# pip install scikit-learn matplotlib thop h5py SimpleITK scikit-image medpy yacs
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Requirement already satisfied: scikit-learn in /usr/local/lib/python3.8/dist-packages (1.3.0)
+Requirement already satisfied: matplotlib in /usr/local/lib/python3.8/dist-packages (3.7.2)
+Collecting thop
+  Obtaining dependency information for thop from https://files.pythonhosted.org/packages/bb/0f/72beeab4ff5221dc47127c80f8834b4bcd0cb36f6ba91c0b1d04a1233403/thop-0.1.1.post2209072238-py3-none-any.whl.metadata
+  Downloading thop-0.1.1.post2209072238-py3-none-any.whl.metadata (2.7 kB)
+Requirement already satisfied: h5py in /usr/local/lib/python3.8/dist-packages (3.10.0)
+Collecting SimpleITK
+  Obtaining dependency information for SimpleITK from https://files.pythonhosted.org/packages/86/11/2b55d79c7b5db2cbb77a7acc04b72bdd362602001125ed467a96c141075e/SimpleITK-2.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+  Downloading SimpleITK-2.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.9 kB)
+Requirement already satisfied: scikit-image in /usr/local/lib/python3.8/dist-packages (0.21.0)
+Collecting medpy
+  Downloading MedPy-0.4.0.tar.gz (151 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 151.8/151.8 kB 790.0 kB/s eta 0:00:00
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: yacs in /usr/local/lib/python3.8/dist-packages (0.1.8)
+Requirement already satisfied: numpy>=1.17.3 in /usr/local/lib/python3.8/dist-packages (from scikit-learn) (1.24.4)
+Requirement already satisfied: scipy>=1.5.0 in /usr/local/lib/python3.8/dist-packages (from scikit-learn) (1.10.1)
+Requirement already satisfied: joblib>=1.1.1 in /usr/local/lib/python3.8/dist-packages (from scikit-learn) (1.3.2)
+Requirement already satisfied: threadpoolctl>=2.0.0 in /usr/local/lib/python3.8/dist-packages (from scikit-learn) (3.2.0)
+Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (1.1.0)
+Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (0.11.0)
+Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (4.42.1)
+Requirement already satisfied: kiwisolver>=1.0.1 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (1.4.5)
+Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (23.1)
+Requirement already satisfied: pillow>=6.2.0 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (10.0.0)
+Requirement already satisfied: pyparsing<3.1,>=2.3.1 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (3.0.9)
+Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (2.8.2)
+Requirement already satisfied: importlib-resources>=3.2.0 in /usr/local/lib/python3.8/dist-packages (from matplotlib) (6.0.1)
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from thop) (2.0.1)
+Requirement already satisfied: networkx>=2.8 in /usr/local/lib/python3.8/dist-packages (from scikit-image) (3.1)
+Requirement already satisfied: imageio>=2.27 in /usr/local/lib/python3.8/dist-packages (from scikit-image) (2.31.2)
+Requirement already satisfied: tifffile>=2022.8.12 in /usr/local/lib/python3.8/dist-packages (from scikit-image) (2023.7.10)
+Requirement already satisfied: PyWavelets>=1.1.1 in /usr/local/lib/python3.8/dist-packages (from scikit-image) (1.4.1)
+Requirement already satisfied: lazy_loader>=0.2 in /usr/local/lib/python3.8/dist-packages (from scikit-image) (0.3)
+Requirement already satisfied: PyYAML in /usr/local/lib/python3.8/dist-packages (from yacs) (6.0.1)
+Requirement already satisfied: zipp>=3.1.0 in /usr/local/lib/python3.8/dist-packages (from importlib-resources>=3.2.0->matplotlib) (3.16.2)
+Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.8/dist-packages (from python-dateutil>=2.7->matplotlib) (1.16.0)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch->thop) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch->thop) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->thop) (1.12)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (11.7.91)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (from torch->thop) (2.0.0)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->thop) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->thop) (0.41.2)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->thop) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->thop) (16.0.6)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->thop) (2.1.3)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->thop) (1.3.0)
+Downloading thop-0.1.1.post2209072238-py3-none-any.whl (15 kB)
+Downloading SimpleITK-2.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (52.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 52.7/52.7 MB 13.8 MB/s eta 0:00:00
+Building wheels for collected packages: medpy
+  Building wheel for medpy (setup.py) ... done
+  Created wheel for medpy: filename=MedPy-0.4.0-py3-none-any.whl size=214949 sha256=9ee3b7a9dd2c6a939fa4188e23fc8425c4fcfed4e2d0798c29baecc3800029f3
+  Stored in directory: /root/.cache/pip/wheels/fc/38/7d/e0b8bcb2770f779a93cab5ab7fa6dd344011e1278cb90cab86
+Successfully built medpy
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: SimpleITK, medpy, thop
+Successfully installed SimpleITK-2.3.1 medpy-0.4.0 thop-0.1.1.post2209072238
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+root@6664b504659f:~/OpenPCDet# git clone https://github.com/octree-nn/dwconv.git
+Cloning into 'dwconv'...
+remote: Enumerating objects: 113, done.
+remote: Counting objects: 100% (113/113), done.
+remote: Compressing objects: 100% (77/77), done.
+remote: Total 113 (delta 45), reused 101 (delta 35), pack-reused 0
+Receiving objects: 100% (113/113), 6.85 MiB | 23.29 MiB/s, done.
+Resolving deltas: 100% (45/45), done.
+root@6664b504659f:~/OpenPCDet# cd dwconv/
+root@6664b504659f:~/OpenPCDet/dwconv# cd ..
+root@6664b504659f:~/OpenPCDet# pip install ./dwconv
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Processing ./dwconv
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from dwconv==1.1.0) (2.0.1)
+Requirement already satisfied: numpy in /usr/local/lib/python3.8/dist-packages (from dwconv==1.1.0) (1.24.4)
+Collecting ocnn (from dwconv==1.1.0)
+  Obtaining dependency information for ocnn from https://files.pythonhosted.org/packages/b6/27/8bd1f1e5b043c2bdfb86ac3eaedac1ba3cc3c33d32408829e702fcfcc88d/ocnn-2.2.2-py3-none-any.whl.metadata
+  Downloading ocnn-2.2.2-py3-none-any.whl.metadata (3.3 kB)
+Requirement already satisfied: torchvision in /usr/local/lib/python3.8/dist-packages (from ocnn->dwconv==1.1.0) (0.15.2)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from ocnn->dwconv==1.1.0) (23.1)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (11.7.91)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (from torch->dwconv==1.1.0) (2.0.0)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->dwconv==1.1.0) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->dwconv==1.1.0) (0.41.2)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->dwconv==1.1.0) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->dwconv==1.1.0) (16.0.6)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->dwconv==1.1.0) (2.1.3)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->dwconv==1.1.0) (1.3.0)
+Requirement already satisfied: requests in /usr/local/lib/python3.8/dist-packages (from torchvision->ocnn->dwconv==1.1.0) (2.31.0)
+Requirement already satisfied: pillow!=8.3.*,>=5.3.0 in /usr/local/lib/python3.8/dist-packages (from torchvision->ocnn->dwconv==1.1.0) (10.0.0)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->ocnn->dwconv==1.1.0) (3.2.0)
+Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->ocnn->dwconv==1.1.0) (3.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->ocnn->dwconv==1.1.0) (1.26.16)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.8/dist-packages (from requests->torchvision->ocnn->dwconv==1.1.0) (2023.7.22)
+Downloading ocnn-2.2.2-py3-none-any.whl (51 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 51.8/51.8 kB 467.8 kB/s eta 0:00:00
+Building wheels for collected packages: dwconv
+  Building wheel for dwconv (setup.py) ... done
+  Created wheel for dwconv: filename=dwconv-1.1.0-cp38-cp38-linux_x86_64.whl size=3286728 sha256=dabd8b116b9b029f7c45f03efc5b2b73f43d7c42fa05eb7c90bbb1bdc817939d
+  Stored in directory: /tmp/pip-ephem-wheel-cache-hl0k9qi9/wheels/eb/bf/e6/82522d6e3e0d6a10fbbae3422ed4c09facb1191df492f489d4
+Successfully built dwconv
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: ocnn, dwconv
+Successfully installed dwconv-1.1.0 ocnn-2.2.2
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+[notice] A new release of pip is available: 23.2.1 -> 24.0
+[notice] To update, run: python -m pip install --upgrade pip
+
+root@6664b504659f:~/OpenPCDet/VMamba/kernels/selective_scan# pip install .
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Processing /root/OpenPCDet/VMamba/kernels/selective_scan
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: torch in /usr/local/lib/python3.8/dist-packages (from selective-scan==0.0.2) (2.0.1)
+Requirement already satisfied: packaging in /usr/local/lib/python3.8/dist-packages (from selective-scan==0.0.2) (23.1)
+Requirement already satisfied: ninja in /usr/local/lib/python3.8/dist-packages (from selective-scan==0.0.2) (1.11.1)
+Requirement already satisfied: einops in /usr/local/lib/python3.8/dist-packages (from selective-scan==0.0.2) (0.7.0)
+Requirement already satisfied: filelock in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (3.12.3)
+Requirement already satisfied: typing-extensions in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (4.7.1)
+Requirement already satisfied: sympy in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (1.12)
+Requirement already satisfied: networkx in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (3.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (3.1.2)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.7.99)
+Requirement already satisfied: nvidia-cuda-runtime-cu11==11.7.99 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.7.99)
+Requirement already satisfied: nvidia-cuda-cupti-cu11==11.7.101 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.7.101)
+Requirement already satisfied: nvidia-cudnn-cu11==8.5.0.96 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (8.5.0.96)
+Requirement already satisfied: nvidia-cublas-cu11==11.10.3.66 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.10.3.66)
+Requirement already satisfied: nvidia-cufft-cu11==10.9.0.58 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (10.9.0.58)
+Requirement already satisfied: nvidia-curand-cu11==10.2.10.91 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (10.2.10.91)
+Requirement already satisfied: nvidia-cusolver-cu11==11.4.0.1 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.4.0.1)
+Requirement already satisfied: nvidia-cusparse-cu11==11.7.4.91 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.7.4.91)
+Requirement already satisfied: nvidia-nccl-cu11==2.14.3 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (2.14.3)
+Requirement already satisfied: nvidia-nvtx-cu11==11.7.91 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (11.7.91)
+Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.8/dist-packages (from torch->selective-scan==0.0.2) (2.0.0)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->selective-scan==0.0.2) (68.1.2)
+Requirement already satisfied: wheel in /usr/local/lib/python3.8/dist-packages (from nvidia-cublas-cu11==11.10.3.66->torch->selective-scan==0.0.2) (0.41.2)
+Requirement already satisfied: cmake in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->selective-scan==0.0.2) (3.27.2)
+Requirement already satisfied: lit in /usr/local/lib/python3.8/dist-packages (from triton==2.0.0->torch->selective-scan==0.0.2) (16.0.6)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.8/dist-packages (from jinja2->torch->selective-scan==0.0.2) (2.1.3)
+Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.8/dist-packages (from sympy->torch->selective-scan==0.0.2) (1.3.0)
+Building wheels for collected packages: selective-scan
+  Building wheel for selective-scan (setup.py) ... done
+  Created wheel for selective-scan: filename=selective_scan-0.0.2-cp38-cp38-linux_x86_64.whl size=27524833 sha256=b492f76ab39d5b389e4d053e8782357a395d08a69b54abbc4993f2771005a992
+  Stored in directory: /tmp/pip-ephem-wheel-cache-3_la5uuk/wheels/99/d5/59/542112595a8852d1c0e07dd775c4acd18c8abef2613b0ccad6
+Successfully built selective-scan
+WARNING: Ignoring invalid distribution -ensorflow-estimator (/usr/local/lib/python3.8/dist-packages)
+WARNING: Ignoring invalid distribution -umpy (/usr/local/lib/python3.8/dist-packages)
+Installing collected packages: selective-scan
+Successfully installed selective-scan-0.0.2
