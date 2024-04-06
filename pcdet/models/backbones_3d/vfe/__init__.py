@@ -1,5 +1,6 @@
 from .mean_vfe import MeanVFE
 from .pillar_vfe import PillarVFE
+# from .pillarmamba_vfe import PillarMambaVFE
 from .dynamic_mean_vfe import DynamicMeanVFE
 from .dynamic_pillar_vfe import DynamicPillarVFE, DynamicPillarVFESimple2D
 from .dynamic_voxel_vfe import DynamicVoxelVFE
@@ -15,4 +16,5 @@ __all__ = {
     'DynPillarVFE': DynamicPillarVFE,
     'DynamicPillarVFESimple2D': DynamicPillarVFESimple2D,
     'DynamicVoxelVFE': DynamicVoxelVFE,
+    # 'PillarMambaVFE': PillarMambaVFE,
 }

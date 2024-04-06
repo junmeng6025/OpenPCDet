@@ -21,13 +21,13 @@ from tools.process_tools.logger import CustomEncoder
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml', 
+    parser.add_argument('--cfg_file', type=str, default='cfgs/kitti_models/pointpillar.yaml', 
                         help='specify the config for training')
 
-    parser.add_argument('--batch_size', type=int, default=2, required=False, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=4, required=False, help='batch size for training')
     parser.add_argument('--workers', type=int, default=4, help='number of workers for dataloader')
     parser.add_argument('--extra_tag', type=str, default='debug', help='extra tag for this experiment')
-    parser.add_argument('--ckpt', type=str, default='../output/kitti_models/pv_rcnn_relation_car_class_only/train-CarClass-k16-IP_mlp_bs2/20240311-183601/ckpt/checkpoint_epoch_74.pth', 
+    parser.add_argument('--ckpt', type=str, default='../output/pointpillar_7728.pth', 
                         help='checkpoint to start from')
     parser.add_argument('--pretrained_model', type=str, default=None, help='pretrained_model')
     parser.add_argument('--launcher', choices=['none', 'pytorch', 'slurm'], default='none')

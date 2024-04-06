@@ -4,6 +4,13 @@ import torch.nn.functional as F
 
 from .vfe_template import VFETemplate
 
+import pickle
+PATH="/root/OpenPCDet/output/pillar_mamba_pkl"
+
+def save_to_pkl(data, fname, path=PATH):
+    with open('%s/%s.pkl'%(path, fname), 'wb') as f:
+        pickle.dump(data, f)
+
 
 class PFNLayer(nn.Module):
     def __init__(self,
@@ -72,13 +79,15 @@ class PillarVFE(VFETemplate):
                 PFNLayer(in_filters, out_filters, self.use_norm, last_layer=(i >= len(num_filters) - 2))
             )
         self.pfn_layers = nn.ModuleList(pfn_layers)
+        print(self.pfn_layers)
 
-        self.voxel_x = voxel_size[0]
+        self.voxel_x = voxel_size[0]  # voxel_size=[0.16, 0.16, 4]  point_cloud_range=[0, -39.68, -3, 69.12, 39.68, 1]
         self.voxel_y = voxel_size[1]
         self.voxel_z = voxel_size[2]
         self.x_offset = self.voxel_x / 2 + point_cloud_range[0]
         self.y_offset = self.voxel_y / 2 + point_cloud_range[1]
         self.z_offset = self.voxel_z / 2 + point_cloud_range[2]
+        print("DEBUG: PillarVFE init finished.")
 
     def get_output_feature_dim(self):
         return self.num_filters[-1]
@@ -92,10 +101,18 @@ class PillarVFE(VFETemplate):
         return paddings_indicator
 
     def forward(self, batch_dict, **kwargs):
-  
+        """
+        batch_dict
+            bs: 2
+            points: (num_pts, 5)
+            voxels: (num_voxels, N_pt_per_voxel=32, 4) [x, y, z, refl]
+            voxel_num_points: (num_voxels)
+            voxel_coords (num_voxels, 4) [bs_idx, z=0, x, y]
+        """
+        save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
         voxel_features, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
-        points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)
-        f_cluster = voxel_features[:, :, :3] - points_mean
+        points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)  # (num_voxels, 1, 3)
+        f_cluster = voxel_features[:, :, :3] - points_mean  # (num_voxels, N_pts=32, 3): [x_diff, y_diff, z_diff]
 
         f_center = torch.zeros_like(voxel_features[:, :, :3])
         f_center[:, :, 0] = voxel_features[:, :, 0] - (coords[:, 3].to(voxel_features.dtype).unsqueeze(1) * self.voxel_x + self.x_offset)
@@ -103,21 +120,26 @@ class PillarVFE(VFETemplate):
         f_center[:, :, 2] = voxel_features[:, :, 2] - (coords[:, 1].to(voxel_features.dtype).unsqueeze(1) * self.voxel_z + self.z_offset)
 
         if self.use_absolute_xyz:
-            features = [voxel_features, f_cluster, f_center]
+            features = [voxel_features, f_cluster, f_center]  # (num_voxels, N_pts=32, 4+3+3=10)
         else:
             features = [voxel_features[..., 3:], f_cluster, f_center]
 
         if self.with_distance:
             points_dist = torch.norm(voxel_features[:, :, :3], 2, 2, keepdim=True)
             features.append(points_dist)
-        features = torch.cat(features, dim=-1)
+        features = torch.cat(features, dim=-1)  # (num_voxels, N_pts=32, 3)
+        # save_to_pkl(features, "features_origin")
 
-        voxel_count = features.shape[1]
-        mask = self.get_paddings_indicator(voxel_num_points, voxel_count, axis=0)
-        mask = torch.unsqueeze(mask, -1).type_as(voxel_features)
+        voxel_count = features.shape[1]  # N_pts=32
+        mask = self.get_paddings_indicator(voxel_num_points, voxel_count, axis=0)  # find out padded pts
+        # save_to_pkl(mask, "mask_rigin")
+        mask = torch.unsqueeze(mask, -1).type_as(voxel_features)  # (num_voxels, N_pts=32, 1)
+        # save_to_pkl(mask, "mask_unsqueezed")
         features *= mask
+        # save_to_pkl(features, "features_masked")
         for pfn in self.pfn_layers:
             features = pfn(features)
         features = features.squeeze()
-        batch_dict['pillar_features'] = features
+        # save_to_pkl(features, "features_final")
+        batch_dict['pillar_features'] = features  # (num_voxels, dim_pfn=64)
         return batch_dict
