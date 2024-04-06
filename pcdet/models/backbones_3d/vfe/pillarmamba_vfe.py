@@ -3,9 +3,11 @@ import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
+from copy import deepcopy
 
 import ocnn
 from ocnn.octree import Octree
+from ocnn.octree.points import Points
 import dwconv
 
 from timm.models.layers import DropPath
@@ -18,21 +20,9 @@ try:
 except ImportError:
     RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None
 
-from .vfe_template import VFETemplate
-# from vfe_template import VFETemplate
+# from .vfe_template import VFETemplate
+from vfe_template import VFETemplate
 from typing import Optional, List
-
-import pickle
-PATH="/root/OpenPCDet/output/pillar_mamba_pkl"
-
-
-def save_pkl(data, fname, path=PATH):
-    with open('%s/%s.pkl'%(path, fname), 'wb') as f:
-        pickle.dump(data, f)
-
-def load_pkl(fname, path=PATH):
-    with open('%s/%s.pkl'%(path, fname), 'rb') as f:
-        return pickle.load(f)
 
 # class PFNLayer(nn.Module):
 #     def __init__(self,
@@ -82,7 +72,7 @@ def load_pkl(fname, path=PATH):
 class OctreeT(Octree):
     def __init__(self, octree: Octree, patch_size: int = 24, dilation: int = 4,
                 nempty: bool = True, max_depth: Optional[int] = None,
-                start_depth: Optional[int] = None, **kwargs):
+                start_depth: Optional[int] = 2, **kwargs):
         super().__init__(octree.depth, octree.full_depth)
         self.__dict__.update(octree.__dict__)
 
@@ -90,7 +80,7 @@ class OctreeT(Octree):
         # self.dilation = dilation  # TODO dilation as a list
         self.nempty = nempty
         self.max_depth = max_depth or self.depth
-        self.start_depth = start_depth or self.full_depth
+        self.start_depth = self.full_depth or start_depth # if the value in the front is None, then get the latter one
         self.invalid_mask_value = -1e3
         assert self.start_depth > 1
 
@@ -111,7 +101,8 @@ class OctreeT(Octree):
         self.batch_idx[depth] = self.patch_partition(batch, depth, self.batch_size)
 
     def patch_partition(self, data: torch.Tensor, depth: int, fill_value=0):
-        num = self.nnum_a[depth] - self.nnum_t[depth]
+        # num = self.nnum_a[depth] - self.nnum_t[depth]  # Err: Negative dim
+        num =  self.nnum_t[depth] - self.nnum_a[depth]
         tail = data.new_full((num,) + data.shape[1:], fill_value)
 
 
@@ -265,6 +256,7 @@ class PointMambaStage(torch.nn.Module):
 
 
 class PatchEmbed(torch.nn.Module):
+
     def __init__(self, in_channels: int = 3, dim: int = 96, num_down: int = 2,
                 nempty: bool = True, **kwargs):
         super().__init__()
@@ -564,101 +556,276 @@ class PointMambaMix(nn.Module):
         return input_ids
 
 
-
-# ======================================================================================
-class PillarMambaVFE(VFETemplate):
-    def __init__(self, model_cfg, num_point_features, voxel_size, point_cloud_range, **kwargs):
+class PCLMamba(VFETemplate):
+    def __init__(self, model_cfg, **kwargs):
         super().__init__(model_cfg=model_cfg)
-
-        self.use_norm = self.model_cfg.USE_NORM
-        self.with_distance = self.model_cfg.WITH_DISTANCE
-        self.use_absolute_xyz = self.model_cfg.USE_ABSLOTE_XYZ
-        num_point_features += 6 if self.use_absolute_xyz else 3
-        if self.with_distance:
-            num_point_features += 1
-
-        self.num_filters = self.model_cfg.NUM_FILTERS
-        assert len(self.num_filters) > 0
-        num_filters = [num_point_features] + list(self.num_filters)
-
-        self.in_chn = self.model_cfg.IN_CHN
-        self.out_dim = self.model_cfg.OUT_DIM
-        self.channels = self.model_cfg.CHANNELS
-        self.num_blocks = self.model_cfg.NUM_BLOCKS
+        self.mamba_cfg=model_cfg.MAMBA
+        self.octree_cfg=model_cfg.OCTREE
+        self.ptmamba = PointMamba(
+            in_channels=self.mamba_cfg.IN_CHN, 
+            channels=self.mamba_cfg.CHANNELS, 
+            num_blocks=self.mamba_cfg.NUM_BLOCKS)
         
-        self.ptmamba = PointMamba(in_channels=4, channels=[96], num_blocks=[2])
-        print("DEBUG: ptmamba init:\n"+self.ptmamba)
-
-        # pfn_layers = []
-        # for i in range(len(num_filters) - 1):
-        #     in_filters = num_filters[i]
-        #     out_filters = num_filters[i + 1]
-        #     pfn_layers.append(
-        #         PFNLayer(in_filters, out_filters, self.use_norm, last_layer=(i >= len(num_filters) - 2))
-        #     )
-        # self.pfn_layers = nn.ModuleList(pfn_layers)
-
-        self.voxel_x = voxel_size[0]
-        self.voxel_y = voxel_size[1]
-        self.voxel_z = voxel_size[2]
-        self.x_offset = self.voxel_x / 2 + point_cloud_range[0]
-        self.y_offset = self.voxel_y / 2 + point_cloud_range[1]
-        self.z_offset = self.voxel_z / 2 + point_cloud_range[2]
-
     def get_output_feature_dim(self):
-        return self.num_filters[-1]
-
-    def get_paddings_indicator(self, actual_num, max_num, axis=0):
-        actual_num = torch.unsqueeze(actual_num, axis + 1)
-        max_num_shape = [1] * len(actual_num.shape)
-        max_num_shape[axis + 1] = -1
-        max_num = torch.arange(max_num, dtype=torch.int, device=actual_num.device).view(max_num_shape)
-        paddings_indicator = actual_num.int() > max_num
-        return paddings_indicator
-
-    def forward(self, batch_dict, **kwargs):
-  
-        voxel_features, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
-        points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)
-        f_cluster = voxel_features[:, :, :3] - points_mean
-
-        f_center = torch.zeros_like(voxel_features[:, :, :3])
-        f_center[:, :, 0] = voxel_features[:, :, 0] - (coords[:, 3].to(voxel_features.dtype).unsqueeze(1) * self.voxel_x + self.x_offset)
-        f_center[:, :, 1] = voxel_features[:, :, 1] - (coords[:, 2].to(voxel_features.dtype).unsqueeze(1) * self.voxel_y + self.y_offset)
-        f_center[:, :, 2] = voxel_features[:, :, 2] - (coords[:, 1].to(voxel_features.dtype).unsqueeze(1) * self.voxel_z + self.z_offset)
-
-        if self.use_absolute_xyz:
-            features = [voxel_features, f_cluster, f_center]
-        else:
-            features = [voxel_features[..., 3:], f_cluster, f_center]
-
-        if self.with_distance:
-            points_dist = torch.norm(voxel_features[:, :, :3], 2, 2, keepdim=True)
-            features.append(points_dist)
-        features = torch.cat(features, dim=-1)
-
-        voxel_count = features.shape[1]
-        mask = self.get_paddings_indicator(voxel_num_points, voxel_count, axis=0)
-        mask = torch.unsqueeze(mask, -1).type_as(voxel_features)
-        features *= mask
-        for pfn in self.pfn_layers:
-            features = pfn(features)
-        features = features.squeeze()
-        batch_dict['pillar_features'] = features
+        return self.ptmamba.channels[-1]
+        
+    def get_input_feature(self, octree):
+        octree_feature=ocnn.modules.InputFeature(
+            self.octree_cfg.FEATURES, 
+            self.octree_cfg.NEMPTY)
+        data = octree_feature(octree)
+        return data
+    
+    def points2octree(self, points):
+        device=points.device
+        print("DEBUG: octree gen using device %s"%device)
+        octree = ocnn.octree.Octree(
+            depth=self.octree_cfg.DEPTH, 
+            full_depth=self.octree_cfg.FULL_DEPTH,
+            device=device)
+        octree.build_octree(points)
+        return octree
+    
+    def process_pcl(self, pcl_xyz):
+        assert pcl_xyz.dim()==2
+        assert pcl_xyz.shape[1]==3
+        # pcl_xyz_norm = pclxyz_norm(pcl_xyz)
+        # pts = Points(pcl_xyz, features=pcl_xyz, normals=pcl_xyz)
+        pts = Points(pcl_xyz, normals=pcl_xyz)
+        pts.cuda(non_blocking=True)
+        octree = self.points2octree(pts)
+        octree.cuda(non_blocking=True)
+        octree.construct_all_neigh()
+        return octree, pts
+    
+    def forward(self, batch_dict):
+        bs=batch_dict['batch_size']
+        points = batch_dict['points']
+        points_batch = []
+        for bs_id in range(bs):
+            points_batch.append(points[points[:, 0]==bs_id, :])
+            print("points num_batch%d: %d"%(bs_id, points_batch[bs_id].shape[0]))  # 18616; 20024
+        
+        points_ocnn = [Points(pcl[:, 1:4], features=pcl[:, 1:4], normals=pcl[:, 1:4]) for pcl in points_batch]
+        octrees = [self.points2octree(pts) for pts in points_ocnn]
+        octree = ocnn.octree.merge_octrees(octrees)
+        octree.construct_all_neigh()
+        points_ocnn = ocnn.octree.merge_points(points_ocnn)
+        batch_dict['octree']=octree
+        batch_dict['points_ocnn']=points_ocnn
+        data = self.get_input_feature(octree)
+        logits = self.ptmamba(data, octree, octree.depth)
+        batch_dict['data']=data
+        batch_dict['logits']=logits
+        
         return batch_dict
 
 
+    
+
+
 if __name__ == '__main__':
-    ptmamba = PointMamba(in_channels=4, channels=[96], num_blocks=[2])
+    import pickle
+    PATH="/root/OpenPCDet/output/pillar_mamba_pkl"
+    def save_pkl(data, fname, path=PATH):
+        with open('%s/%s.pkl'%(path, fname), 'wb') as f:
+            pickle.dump(data, f)
+
+    def load_pkl(fname, path=PATH):
+        with open('%s/%s.pkl'%(path, fname), 'rb') as f:
+            return pickle.load(f)
+    
+    from easydict import EasyDict as edict
+    cfg_pclmamba = edict({
+        'MAMBA':{
+            'IN_CHN': 4,
+            'CHANNELS': [96],
+            'NUM_BLOCKS': [2],
+        },
+        'OCTREE':{
+            'DEPTH': 6,
+            'FULL_DEPTH': 2,
+            'NEMPTY': False,
+            'FEATURES': 'ND',
+            'ORIENT_NORM': 'xyz',
+        },
+    })
+    # # pillar feature analysis
+    # features_origin = load_pkl("features_origin")  # (9913, 32, 10)
+    # mask_rigin = load_pkl("mask_rigin")            # (9913, 32)
+    # mask_unsqueezed = load_pkl("mask_unsqueezed")  # (9913, 32, 1)
+    # features_masked = load_pkl("features_masked")  # (9913, 32, 10)  PFN: in_features=10
+    # features_final = load_pkl("features_final")    # (9913, 64)      PFN: out_features=64
+    # print("DEBUG: pkl loaded")
+
+    # batch_dict = load_pkl("batch_dict_bs32")
+    batch_dict = load_pkl("batch_dict_bs4")
+    """
+    batch_dict
+        bs: 2
+        points: (num_pts, 5)
+        voxels: (num_voxels, N=32, 4) [x, y, z, refl],  N is num pts per voxel
+        voxel_num_points: (num_voxels)
+        voxel_coords: (num_voxels, 4) [bs_idx, z=0, x, y]
+        points: (num_pts, 5) [bs_idx, x, y, z, refl]
+    """
+    B=batch_dict['batch_size']
+    N=batch_dict['voxels'].shape[1]  # N pts per voxel
+    N_PTS=batch_dict['points'].shape[0]
+    N_VOX=batch_dict['voxels'].shape[0]
+
+    # voxels, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
+
+    # voxel_batch0=coords[coords[:, 0]==0, :]
+    # print("Voxel num_batch0: %d"%voxel_batch0.shape[0])  # 6812
+    # voxel_batch1=coords[coords[:, 0]==1, :]
+    # print("Voxel num_batch1: %d"%voxel_batch1.shape[0])  # 3101
+
+    # DEBUG: Use PCLMamba =====================================================
+    # pclmamba = PCLMamba(model_cfg=cfg_pclmamba)
+    # pclmamba(batch_dict)
+
+    # print("DEBUG: End Debug")
+
+    # DEBUG: code =====================================================
+    points = batch_dict['points']
+    points_batch = []
+    for bs_id in range(B):
+        points_batch.append(points[points[:, 0]==bs_id, :])
+        print("points num_batch%d: %d"%(bs_id, points_batch[bs_id].shape[0]))  # 18616; 20024
+
+
+    
+
+    # CFG: ptmamba
+    IN_CHN=4
+    # CHANNELS=[96]
+    # NUM_BLOCKS=[2]
+    CHANNELS=[96, 192, 384, 384]
+    NUM_BLOCKS=[2, 2, 18, 2]
+    
+    assert len(CHANNELS)==len(NUM_BLOCKS) # ==num_stages
+    ptmamba = PointMamba(in_channels=IN_CHN, channels=CHANNELS, num_blocks=NUM_BLOCKS, nempty=False)
+    ptmamba = ptmamba.to(points.device)
     print("DEBUG: ptmamba init:\n")
     print(ptmamba)
 
-    B=4
-    N=32
-    N_PTS=38640
-    N_VOX=9913
-    OUT_DIM=32
+    octree_feature = ocnn.modules.InputFeature(feature='ND', nempty=False)
+    """
+    N: normal signal is extracted (3 channels)
+    D: local displacement is extracted (1 channels)
+    L: local coordinates of the averaged points in each octree node is extracted (3 channels)
+    P: global coordinates are extracted (3 channels)
+    F: other features (like colors) are extracted (k channels)
+    """
 
+    # CFG: octree
+    DEPTH=6
+    FULL_DEPTH=2
+    ORIENT_NORM='xyz'
+
+    # def points2octree(points):
+    #     device=points.device
+    #     print("DEBUG: Using device %s"%device)
+    #     octree = ocnn.octree.Octree(depth=6, full_depth=2, device=device)
+    #     octree.build_octree(points)
+    #     return octree
+    
+    # def process_voxels(voxels):
+    #     points = [Points(pts_voxel[:, :3]) for pts_voxel in torch.unbind(voxels, dim=0)]
+    #     octrees = [points2octree(pts) for pts in points]
+    #     octrees_merged = ocnn.octree.merge_octrees(octrees)
+    #     octrees_merged.construct_all_neigh()
+    #     points_merged = ocnn.octree.merge_points(points)
+    #     return octrees_merged, points_merged
+    
+    # def process_voxel(pts_voxel):
+    #     pts = Points(pts_voxel[:, :3])
+    #     octree = points2octree(pts)
+    #     octree.construct_all_neigh()
+    #     return octree, pts
+
+    # mamba_dicts = []
+    # for pts_voxel in torch.unbind(voxels, dim=0):
+    #     octree, pts = process_voxel(pts_voxel)
+    #     data = octree_feature(octree)
+    #     logits = ptmamba(data, octree, octree.depth)
+    #     mamba_dict = {
+    #         'octree': octree,
+    #         'pts': pts,
+    #         'logits': logits,}
+    #     mamba_dicts.append(mamba_dict)
+
+    # def points2octree(points):
+    #     device=points.device
+    #     print("DEBUG: octree gen using device %s"%device)
+    #     octree = ocnn.octree.Octree(depth=6, full_depth=2, device=device)
+    #     octree.build_octree(points)
+    #     return octree
+
+    def process_pcl(pcl_xyz):
+        assert pcl_xyz.dim()==2
+        assert pcl_xyz.shape[1]==3
+        pts = Points(pcl_xyz, features=pcl_xyz, normals=pcl_xyz)
+        # pts = Points(pcl_xyz, features=pcl_xyz)
+        pts.cuda(non_blocking=True)
+        octree = ocnn.octree.Octree(depth=6, full_depth=2, device=pts.device)
+        octree.build_octree(pts)
+        # octree = points2octree(pts)
+        octree.cuda(non_blocking=True)
+        octree.construct_all_neigh()
+        return octree, pts
+    
+    # Debug: Batch merge ============================================================================
+    # points_ocnn = [Points(pcl[:, 1:4], features=pcl[:, 1:4], normals=pcl[:, 1:4]) for pcl in points_batch]
+    # octrees = [points2octree(pts) for pts in points_ocnn]
+    # octree = ocnn.octree.merge_octrees(octrees)
+    # octree.construct_all_neigh()
+    # points_ocnn = ocnn.octree.merge_points(points_ocnn)
+    # # mamba_dict = {
+    # #     'points_ocnn': points_ocnn,
+    # #     'octree': octree,
+    # # }
+    # data = octree_feature(octree)
+    # logits = ptmamba(data, octree, octree.depth)
+
+    # Debug: NO batch merge ============================================================================
+    mamba_dict_batch = []
+    for pcl in points_batch:
+        pcl_xyz = deepcopy(pcl[:, 1:4])
+        octree, pts = process_pcl(pcl_xyz)
+        data = octree_feature(octree)  # (79808, 4)
+        mamba_features = ptmamba(data, octree, octree.depth)  # {'stage_idx': Tensor}
+        mamba_dict = {
+            'octree': octree,
+            'pts': pts,
+            'mamba_features': mamba_features,}
+        mamba_dict_batch.append(mamba_dict)
+
+    save_pkl(mamba_dict_batch, "mamba_dicts_bs%d"%batch_dict['batch_size'])
+
+
+    
+    # # octree_merged, pt_merged = process_voxels(voxels)
+    # save_pkl(octree_merged, "octree_merged")
+    # save_pkl(pt_merged, "pt_merged")
+    
+    
+    # data = octree_feature(octree_merged)
+    # save_pkl(data, "data")
+
+    # logits = ptmamba(data, octree_merged, ptmamba.depth)
+    # save_pkl(logits, "logits")
+
+    # mamba_features = []
+    # for pts_voxel in torch.unbind(voxels, dim=0):
+    #     pts = pts_voxel[:, :3]
+    #     octrees = [points2octree(pt) for pt in pts]
+    #     octree = ocnn.octree.merge_octrees(octrees)
+    #     octree.construct_all_neigh()
+    #     pts_searched=ocnn.octree.merge_points(pts)
+
+    print("End Debug")
 
     # pooled_feature_dim=256
     # roi_ip_feature_dim=128
