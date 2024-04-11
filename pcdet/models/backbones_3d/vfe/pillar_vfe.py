@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from .vfe_template import VFETemplate
 
 import pickle
-PATH="/root/OpenPCDet/output/pillar_mamba_pkl"
+PATH="/root/OpenPCDet/output/pillar_mamba_pkl/bs4"
 
 def save_to_pkl(data, fname, path=PATH):
     with open('%s/%s.pkl'%(path, fname), 'wb') as f:
@@ -87,7 +87,7 @@ class PillarVFE(VFETemplate):
         self.x_offset = self.voxel_x / 2 + point_cloud_range[0]
         self.y_offset = self.voxel_y / 2 + point_cloud_range[1]
         self.z_offset = self.voxel_z / 2 + point_cloud_range[2]
-        print("DEBUG: PillarVFE init finished.")
+        # print("DEBUG: PillarVFE init finished.")
 
     def get_output_feature_dim(self):
         return self.num_filters[-1]
@@ -109,7 +109,7 @@ class PillarVFE(VFETemplate):
             voxel_num_points: (num_voxels)
             voxel_coords (num_voxels, 4) [bs_idx, z=0, x, y]
         """
-        save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
+        # save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
         voxel_features, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
         points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)  # (num_voxels, 1, 3)
         f_cluster = voxel_features[:, :, :3] - points_mean  # (num_voxels, N_pts=32, 3): [x_diff, y_diff, z_diff]
@@ -141,5 +141,6 @@ class PillarVFE(VFETemplate):
             features = pfn(features)
         features = features.squeeze()
         # save_to_pkl(features, "features_final")
-        batch_dict['pillar_features'] = features  # (num_voxels, dim_pfn=64)
+        batch_dict['pillar_features'] = features  # (num_voxels, dim_pfn=64)  [25993, 64]
+        save_to_pkl(batch_dict, "batch_dict_pp_bs4")
         return batch_dict

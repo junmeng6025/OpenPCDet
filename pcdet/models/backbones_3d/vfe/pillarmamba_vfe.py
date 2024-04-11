@@ -561,63 +561,83 @@ class PCLMamba(VFETemplate):
         super().__init__(model_cfg=model_cfg)
         self.mamba_cfg=model_cfg.MAMBA
         self.octree_cfg=model_cfg.OCTREE
+        assert len(self.mamba_cfg.CHANNELS)==len(self.mamba_cfg.NUM_BLOCKS)
+        self.octree_merge = False
+        self.device='cuda:0'
+
         self.ptmamba = PointMamba(
             in_channels=self.mamba_cfg.IN_CHN, 
             channels=self.mamba_cfg.CHANNELS, 
-            num_blocks=self.mamba_cfg.NUM_BLOCKS)
+            num_blocks=self.mamba_cfg.NUM_BLOCKS,
+            nempty=False).to(self.device)
         
     def get_output_feature_dim(self):
         return self.ptmamba.channels[-1]
         
     def get_input_feature(self, octree):
+        """
+        N: normal signal is extracted (3 channels)
+        D: local displacement is extracted (1 channels)
+        L: local coordinates of the averaged points in each octree node is extracted (3 channels)
+        P: global coordinates are extracted (3 channels)
+        F: other features (like colors) are extracted (k channels)
+        """
         octree_feature=ocnn.modules.InputFeature(
             self.octree_cfg.FEATURES, 
             self.octree_cfg.NEMPTY)
         data = octree_feature(octree)
         return data
     
-    def points2octree(self, points):
-        device=points.device
-        print("DEBUG: octree gen using device %s"%device)
-        octree = ocnn.octree.Octree(
-            depth=self.octree_cfg.DEPTH, 
-            full_depth=self.octree_cfg.FULL_DEPTH,
-            device=device)
-        octree.build_octree(points)
-        return octree
-    
     def process_pcl(self, pcl_xyz):
         assert pcl_xyz.dim()==2
         assert pcl_xyz.shape[1]==3
-        # pcl_xyz_norm = pclxyz_norm(pcl_xyz)
-        # pts = Points(pcl_xyz, features=pcl_xyz, normals=pcl_xyz)
-        pts = Points(pcl_xyz, normals=pcl_xyz)
+        pts = Points(pcl_xyz, features=pcl_xyz, normals=pcl_xyz)
+        # pts = Points(pcl_xyz, features=pcl_xyz)
         pts.cuda(non_blocking=True)
-        octree = self.points2octree(pts)
+        octree = ocnn.octree.Octree(
+            depth=self.octree_cfg.DEPTH, 
+            full_depth=self.octree_cfg.FULL_DEPTH,
+            device=pts.device)
+        octree.build_octree(pts)
+        # octree = points2octree(pts)
         octree.cuda(non_blocking=True)
         octree.construct_all_neigh()
         return octree, pts
     
     def forward(self, batch_dict):
         bs=batch_dict['batch_size']
-        points = batch_dict['points']
+        points = deepcopy(batch_dict['points'])
         points_batch = []
         for bs_id in range(bs):
             points_batch.append(points[points[:, 0]==bs_id, :])
             print("points num_batch%d: %d"%(bs_id, points_batch[bs_id].shape[0]))  # 18616; 20024
-        
-        points_ocnn = [Points(pcl[:, 1:4], features=pcl[:, 1:4], normals=pcl[:, 1:4]) for pcl in points_batch]
-        octrees = [self.points2octree(pts) for pts in points_ocnn]
-        octree = ocnn.octree.merge_octrees(octrees)
-        octree.construct_all_neigh()
-        points_ocnn = ocnn.octree.merge_points(points_ocnn)
-        batch_dict['octree']=octree
-        batch_dict['points_ocnn']=points_ocnn
-        data = self.get_input_feature(octree)
-        logits = self.ptmamba(data, octree, octree.depth)
-        batch_dict['data']=data
-        batch_dict['logits']=logits
-        
+
+        if self.octree_merge:
+            mamba_dict = {}
+            points_ocnn = [Points(pcl[:, 1:4], features=pcl[:, 1:4], normals=pcl[:, 1:4]) for pcl in points_batch]
+            octrees = [self.points2octree(pts) for pts in points_ocnn]
+            octree = ocnn.octree.merge_octrees(octrees)
+            octree.construct_all_neigh()
+            points_ocnn = ocnn.octree.merge_points(points_ocnn)
+            mamba_dict['octree'] = octree
+            mamba_dict['pts_ocnn'] = points_ocnn
+            data = self.get_input_feature(octree)
+            mamba_features = self.ptmamba(data, octree, octree.depth)
+            mamba_dict['mamba_features'] = mamba_features
+            batch_dict['mamba_dict_merged'] = mamba_dict
+        else:
+            mamba_dict_batch = []
+            for pcl in points_batch:
+                pcl_xyz = deepcopy(pcl[:, 1:4])
+                octree, pts = self.process_pcl(pcl_xyz)
+                data = self.get_input_feature(octree)  # (79808, 4)
+                mamba_features = self.ptmamba(data, octree, octree.depth)  # {'stage_idx': Tensor}
+                mamba_dict = {
+                    'octree': octree,
+                    'pts_ocnn': pts,
+                    'mamba_features': mamba_features,}  # (4096, 96) (4032, 96) (4096, 96) (4096, 96)
+                mamba_dict_batch.append(mamba_dict)
+            batch_dict['mamba_dicts'] = mamba_dict_batch
         return batch_dict
 
 
@@ -626,7 +646,7 @@ class PCLMamba(VFETemplate):
 
 if __name__ == '__main__':
     import pickle
-    PATH="/root/OpenPCDet/output/pillar_mamba_pkl"
+    PATH="/root/OpenPCDet/output/pillar_mamba_pkl/bs4"
     def save_pkl(data, fname, path=PATH):
         with open('%s/%s.pkl'%(path, fname), 'wb') as f:
             pickle.dump(data, f)
@@ -641,6 +661,7 @@ if __name__ == '__main__':
             'IN_CHN': 4,
             'CHANNELS': [96],
             'NUM_BLOCKS': [2],
+            'NEMPTY': False,
         },
         'OCTREE':{
             'DEPTH': 6,
@@ -682,10 +703,17 @@ if __name__ == '__main__':
     # print("Voxel num_batch1: %d"%voxel_batch1.shape[0])  # 3101
 
     # DEBUG: Use PCLMamba =====================================================
-    # pclmamba = PCLMamba(model_cfg=cfg_pclmamba)
-    # pclmamba(batch_dict)
+    pclmamba = PCLMamba(model_cfg=cfg_pclmamba)
+    pclmamba(batch_dict)
+    # save_pkl(batch_dict, "batch_dict_pm_bs%d"%batch_dict['batch_size'])
 
-    # print("DEBUG: End Debug")
+    print("DEBUG: End Debug")
+
+
+
+
+
+
 
     # DEBUG: code =====================================================
     points = batch_dict['points']
@@ -694,15 +722,12 @@ if __name__ == '__main__':
         points_batch.append(points[points[:, 0]==bs_id, :])
         print("points num_batch%d: %d"%(bs_id, points_batch[bs_id].shape[0]))  # 18616; 20024
 
-
-    
-
     # CFG: ptmamba
     IN_CHN=4
-    # CHANNELS=[96]
-    # NUM_BLOCKS=[2]
-    CHANNELS=[96, 192, 384, 384]
-    NUM_BLOCKS=[2, 2, 18, 2]
+    CHANNELS=[96]
+    NUM_BLOCKS=[2]
+    # CHANNELS=[96, 192, 384, 384]
+    # NUM_BLOCKS=[2, 2, 18, 2]
     
     assert len(CHANNELS)==len(NUM_BLOCKS) # ==num_stages
     ptmamba = PointMamba(in_channels=IN_CHN, channels=CHANNELS, num_blocks=NUM_BLOCKS, nempty=False)
