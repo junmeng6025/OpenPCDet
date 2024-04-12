@@ -564,6 +564,7 @@ class PCLMamba(VFETemplate):
         assert len(self.mamba_cfg.CHANNELS)==len(self.mamba_cfg.NUM_BLOCKS)
         self.octree_merge = False
         self.device='cuda:0'
+        self.mamba_batch_merge = True
 
         self.ptmamba = PointMamba(
             in_channels=self.mamba_cfg.IN_CHN, 
@@ -604,6 +605,7 @@ class PCLMamba(VFETemplate):
         octree.construct_all_neigh()
         return octree, pts
     
+    
     def forward(self, batch_dict):
         bs=batch_dict['batch_size']
         points = deepcopy(batch_dict['points'])
@@ -613,20 +615,29 @@ class PCLMamba(VFETemplate):
             print("points num_batch%d: %d"%(bs_id, points_batch[bs_id].shape[0]))  # 18616; 20024
 
         if self.octree_merge:
-            mamba_dict = {}
+            # mamba_dict = {}
+            def points2octree(points):
+                device=points.device
+                print("DEBUG: octree gen using device %s"%device)
+                octree = ocnn.octree.Octree(depth=6, full_depth=2, device=device)
+                octree.build_octree(points)
+                return octree
+            
             points_ocnn = [Points(pcl[:, 1:4], features=pcl[:, 1:4], normals=pcl[:, 1:4]) for pcl in points_batch]
-            octrees = [self.points2octree(pts) for pts in points_ocnn]
+            octrees = [points2octree(pts) for pts in points_ocnn]
             octree = ocnn.octree.merge_octrees(octrees)
             octree.construct_all_neigh()
             points_ocnn = ocnn.octree.merge_points(points_ocnn)
-            mamba_dict['octree'] = octree
-            mamba_dict['pts_ocnn'] = points_ocnn
+            # mamba_dict['octree'] = octree
+            # mamba_dict['pts_ocnn'] = points_ocnn
             data = self.get_input_feature(octree)
             mamba_features = self.ptmamba(data, octree, octree.depth)
-            mamba_dict['mamba_features'] = mamba_features
-            batch_dict['mamba_dict_merged'] = mamba_dict
+            # mamba_dict['mamba_features'] = mamba_features
+            # batch_dict['mamba_dict_merged'] = mamba_dict
+            batch_dict['mamba_features'] = mamba_features
         else:
             mamba_dict_batch = []
+            mamba_feature_batch = []
             for pcl in points_batch:
                 pcl_xyz = deepcopy(pcl[:, 1:4])
                 octree, pts = self.process_pcl(pcl_xyz)
@@ -637,11 +648,11 @@ class PCLMamba(VFETemplate):
                     'pts_ocnn': pts,
                     'mamba_features': mamba_features,}  # (4096, 96) (4032, 96) (4096, 96) (4096, 96)
                 mamba_dict_batch.append(mamba_dict)
-            batch_dict['mamba_dicts'] = mamba_dict_batch
+                mamba_feature_batch.append(mamba_features)
+
+            batch_dict['mamba_dict_batch'] = mamba_dict_batch
+            batch_dict['mamba_feature_batch'] = mamba_feature_batch
         return batch_dict
-
-
-    
 
 
 if __name__ == '__main__':
@@ -816,6 +827,7 @@ if __name__ == '__main__':
 
     # Debug: NO batch merge ============================================================================
     mamba_dict_batch = []
+    mamba_feature_batch = []
     for pcl in points_batch:
         pcl_xyz = deepcopy(pcl[:, 1:4])
         octree, pts = process_pcl(pcl_xyz)
@@ -826,6 +838,7 @@ if __name__ == '__main__':
             'pts': pts,
             'mamba_features': mamba_features,}
         mamba_dict_batch.append(mamba_dict)
+        mamba_feature_batch.append(mamba_features)
 
     save_pkl(mamba_dict_batch, "mamba_dicts_bs%d"%batch_dict['batch_size'])
 

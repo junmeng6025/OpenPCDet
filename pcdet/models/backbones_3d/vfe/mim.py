@@ -767,8 +767,65 @@ if __name__ == '__main__':
         with open('%s/%s.pkl'%(path, fname), 'rb') as f:
             return pickle.load(f)
         
-    batch_dict_pp = load_pkl("batch_dict_pp_bs4")
-    batch_dict_pm = load_pkl("batch_dict_pm_bs4")
+    # batch_dict_pp = load_pkl("batch_dict_pp_bs4")
+    # batch_dict_pm = load_pkl("batch_dict_pm_bs4")
     batch_dict = load_pkl("batch_dict_bs4")
+    """
+    batch_dict
+        bs: 2
+        points: (num_pts, 5)
+        voxels: (num_voxels, N=32, 4) [x, y, z, refl],  N is num pts per voxel
+        voxel_num_points: (num_voxels)
+        voxel_coords: (num_voxels, 4) [bs_idx, z=0, x, y]
+        points: (num_pts, 5) [bs_idx, x, y, z, refl]
+    """
+    B=batch_dict['batch_size']
+    N=batch_dict['voxels'].shape[1]  # N pts per voxel
+    N_PTS=batch_dict['points'].shape[0]
+    N_VOX=batch_dict['voxels'].shape[0]
+
+    from pillar_word_vfe import PillarVFE
+    from pillarmamba_vfe import PCLMamba
+    from easydict import EasyDict as edict
+    import numpy as np
+
+    cfg_pillarvfe = edict({
+        'NAME': 'PillarVFE',
+        'WITH_DISTANCE': False,
+        'USE_ABSLOTE_XYZ': True,
+        'USE_NORM': True,
+        'NUM_FILTERS': [64],
+        'GRID_SIZE': [432, 496, 1],
+    })
+
+    pillar_vfe = PillarVFE(
+        model_cfg=cfg_pillarvfe,
+        num_point_features=4,
+        voxel_size=[0.16, 0.16, 4],
+        point_cloud_range=np.array([0, -39.68, -3, 69.12, 39.68, 1])
+    ).cuda()
+    pillar_vfe(batch_dict)  # ['pillar_feature_batch']
+
+    cfg_pclmamba = edict({
+        'MAMBA':{
+            'IN_CHN': 4,
+            'CHANNELS': [96],
+            'NUM_BLOCKS': [2],
+            'NEMPTY': False,
+        },
+        'OCTREE':{
+            'DEPTH': 6,
+            'FULL_DEPTH': 2,
+            'NEMPTY': False,
+            'FEATURES': 'ND',
+            'ORIENT_NORM': 'xyz',
+        },
+    })
+
+    pclmamba = PCLMamba(model_cfg=cfg_pclmamba).cuda()
+    pclmamba(batch_dict)  # ['mamba_feature_batch']
+
+    sentence_fea = batch_dict['mamba_feature_batch']  # (16320, 96)
+    word_fea = batch_dict['pillar_feature_batch']  # (25993, 64)
 
     print("DEBUG: End")
