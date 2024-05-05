@@ -15,5 +15,5 @@ Follow these steps:
 ```bash
 pip install protobuf==3.19.4
 ```
-- Copy `builder.py` from (let's say `Documents`) to `/usr/local/lib/puthon3.8/dist-packages/google/protobuf/internal` to override the older version
+- Copy `builder.py` from (let's say `Documents`) to `/usr/local/lib/python3.8/dist-packages/google/protobuf/internal` to override the older version
 - Run your code

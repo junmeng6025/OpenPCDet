@@ -101,26 +101,58 @@ class PillarVFE(VFETemplate):
         paddings_indicator = actual_num.int() > max_num
         return paddings_indicator
     
-    def split_batch(self, batch_dict):
+    # def split_batch(self, pillar_features, coords):
+    #     grid_sz = [432, 496, 1]  # TODO: get from dataset
+    #     nx, ny, nz = grid_sz
+    #     # pillar_features, coords = batch_dict['pillar_features'], batch_dict['voxel_coords']
+    #     pillar_feature_batch = []
+    #     batch_size = coords[:, 0].max().int().item() + 1
+    #     for batch_idx in range(batch_size):
+    #         batch_mask = coords[:, 0] == batch_idx
+    #         this_coords = coords[batch_mask, :]
+    #         indices = this_coords[:, 1] + this_coords[:, 2] * nx + this_coords[:, 3]
+    #         indices = indices.type(torch.long)
+    #         pillars = pillar_features[batch_mask, :]
+    #         pillar_feature_batch.append(pillars)
+    #     return pillar_feature_batch
+    
+    def gen_spatial_feature(self, batch_dict):
+        batch_size = batch_dict['batch_size']
+        pillar_features, coords = batch_dict['pillar_features'], batch_dict['voxel_coords']
+        num_bev_features = pillar_features.shape[1]  # 64
         grid_sz = [432, 496, 1]  # TODO: get from dataset
         nx, ny, nz = grid_sz
-        pillar_features, coords = batch_dict['pillar_features'], batch_dict['voxel_coords']
-        pillar_feature_batch = []
-        batch_size = coords[:, 0].max().int().item() + 1
+
+        batch_spatial_features = []
         for batch_idx in range(batch_size):
             # spatial_feature = torch.zeros(
-            #     self.num_bev_features,
-            #     self.nz * self.nx * self.ny,
+            #     num_bev_features,
+            #     nz * nx * ny,
             #     dtype=pillar_features.dtype,
             #     device=pillar_features.device)
+            spatial_feature = torch.zeros(
+                nz * nx * ny,
+                num_bev_features,
+                dtype=pillar_features.dtype,
+                device=pillar_features.device)
 
             batch_mask = coords[:, 0] == batch_idx
             this_coords = coords[batch_mask, :]
-            indices = this_coords[:, 1] + this_coords[:, 2] * nx + this_coords[:, 3]
+            indices = this_coords[:, 1] + this_coords[:, 2]*nx + this_coords[:, 3]
             indices = indices.type(torch.long)
             pillars = pillar_features[batch_mask, :]
-            pillar_feature_batch.append(pillars)
-        return pillar_feature_batch
+            # pillars = pillars.t()
+            # spatial_feature[:, indices] = pillars
+            # batch_spatial_features.append(spatial_feature)
+
+            spatial_feature[indices, :] = pillars
+            batch_spatial_features.append(spatial_feature)
+
+        batch_spatial_features = torch.stack(batch_spatial_features, 0)
+        # batch_spatial_features = batch_spatial_features.view(batch_size, num_bev_features * nz, ny, nx)
+        batch_spatial_features = batch_spatial_features.view(batch_size, ny*nx, num_bev_features*nz)
+        batch_dict['spatial_feature_batch'] = batch_spatial_features  # (B, nx*ny, fdim=64)
+
 
     def forward(self, batch_dict, **kwargs):
         """
@@ -132,6 +164,7 @@ class PillarVFE(VFETemplate):
             voxel_coords (num_voxels, 4) [bs_idx, z=0, x, y]
         """
         # save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
+        batch_size = batch_dict['batch_size']
         voxel_features, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
         points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)  # (num_voxels, 1, 3)
         f_cluster = voxel_features[:, :, :3] - points_mean  # (num_voxels, N_pts=32, 3): [x_diff, y_diff, z_diff]
@@ -165,6 +198,8 @@ class PillarVFE(VFETemplate):
         # save_to_pkl(features, "features_final")
         batch_dict['pillar_features'] = features  # (num_voxels, dim_pfn=64)  [25993, 64]
         # save_to_pkl(batch_dict, "batch_dict_pp_bs4")
-        pillar_feature_split = self.split_batch(batch_dict)
-        batch_dict['pillar_feature_batch'] = pillar_feature_split
+        # pillar_feature_split = self.split_batch(pillar_features=features, coords=coords)
+        # batch_dict['pillar_feature_batch'] = pillar_feature_split  # (6812, 64) (3101, 64) (7513, 64) (8567, 64)
+        self.gen_spatial_feature(batch_dict)  # ['spatial_features'] (B, fdim=64, ny, nx)
+
         return batch_dict

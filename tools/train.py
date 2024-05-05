@@ -21,12 +21,13 @@ from tools.process_tools.logger import CustomEncoder
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pv_rcnn_relation_car_class_only.yaml", help='specify the config for training')
+    parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar_fps.yaml", help='specify the config for training')
+    # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pv_rcnn.yaml", help='specify the config for training')
 
-    parser.add_argument('--batch_size', type=int, default=None, required=False, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=4, required=False, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=None, required=False, help='number of epochs to train for')
     parser.add_argument('--workers', type=int, default=4, help='number of workers for dataloader')
-    parser.add_argument('--extra_tag', type=str, default='default', help='extra tag for this experiment')
+    parser.add_argument('--extra_tag', type=str, default='debug', help='extra tag for this experiment')
     parser.add_argument('--ckpt', type=str, default=None, help='checkpoint to start from')
     parser.add_argument('--date_tag', type=str, default=None, help='the training to resume')
     parser.add_argument('--pretrained_model', type=str, default=None, help='pretrained_model')

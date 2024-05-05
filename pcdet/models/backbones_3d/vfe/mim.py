@@ -23,9 +23,6 @@ except:
 # except:
 #     pass
 
-
-
-
 class SS2D(nn.Module):
     def __init__(
         self,
@@ -415,6 +412,41 @@ class PatchMerging2D_word(nn.Module):
         x = torch.cat([torch.cat([x0, x1], 3), torch.cat([x2, x3], 3)], 4) # B, H/2, W/2, 2*H_in, 2*W_in, C
         x = x.reshape(-1, 2*H_in, 2*W_in, C).permute(0, 3, 1, 2) # B_N/4, C, 2*H_in, 2*W_in
         x = self.conv(x)  # B_N/4, C, H_in, W_in
+        x = x.reshape(-1, self.dim_out, M).transpose(1, 2)  # ()
+
+        return x
+        
+    def forward(self, x):
+        B, M, C = x.shape # B*N, M, C
+        x = self.norm(x)
+        # x = x.reshape(-1, H_out, W_out, H_in, W_in, C)
+        # # padding to fit (1333, 800) in detection.
+        # pad_input = (H_out % 2 == 1) or (W_out % 2 == 1)
+        # if pad_input:
+        #     x = F.pad(x.permute(0, 3, 4, 5, 1, 2), (0, W_out % 2, 0, H_out % 2))
+        #     x = x.permute(0, 4, 5, 1, 2, 3)
+
+        # H,W=x.shape[1],x.shape[2]      
+        # SHAPE_FIX = [-1, -1]
+        # if (W % 2 != 0) or (H % 2 != 0):
+        #     print(f"Warning, x.shape {x.shape} is not match even ===========", flush=True)
+        #     SHAPE_FIX[0] = H // 2
+        #     SHAPE_FIX[1] = W // 2
+
+        # x0 = x[:, 0::2, 0::2, :]  # B H/2 W/2 C
+        # x1 = x[:, 1::2, 0::2, :]  # B H/2 W/2 C
+        # x2 = x[:, 0::2, 1::2, :]  # B H/2 W/2 C
+        # x3 = x[:, 1::2, 1::2, :]  # B H/2 W/2 C
+
+        # if SHAPE_FIX[0] > 0:
+        #     x0 = x0[:, :SHAPE_FIX[0], :SHAPE_FIX[1], :]
+        #     x1 = x1[:, :SHAPE_FIX[0], :SHAPE_FIX[1], :]
+        #     x2 = x2[:, :SHAPE_FIX[0], :SHAPE_FIX[1], :]
+        #     x3 = x3[:, :SHAPE_FIX[0], :SHAPE_FIX[1], :]
+
+        # x = torch.cat([torch.cat([x0, x1], 3), torch.cat([x2, x3], 3)], 4) # B, H/2, W/2, 2*H_in, 2*W_in, C
+        x = x.reshape(-1, M, C).permute(0, 2, 1) # (B, M, C) -> (B, C, M)
+        x = self.conv(x)  # (B, C_out, M)
         x = x.reshape(-1, self.dim_out, M).transpose(1, 2)
 
         return x
@@ -627,6 +659,109 @@ class PyramidMiM_enc(nn.Module):
     def forward(self, x):
         x = self.forward_features(x)
         return x
+    
+
+class PyramidMiM_feamerge(nn.Module):
+    """ Pyramid MiM-ISTD encoder WITHOUT conv stem for feature embedding
+    """
+    def __init__(self, configs=None, img_size=512, in_chans=3, num_classes=1, mlp_ratio=4., qkv_bias=False,
+                qk_scale=None, drop_rate=0., attn_drop_rate=0., drop_path_rate=0., norm_layer=nn.LayerNorm, se=0):
+        super().__init__()
+        self.num_classes = num_classes
+        depths = [2, 4, 9, 2]
+        # outer_dims = [16, 16*2, 16*4, 16*8]
+        # inner_dims = [4, 4*2, 4*4, 4*8]#  original mim-istd
+        outer_dims = [96, 96*2, 96*4, 96*8]
+        inner_dims = [64, 64*2, 64*4, 64*8]  # original mim-istd
+        outer_heads = [2, 2*2, 2*4, 2*8]
+        inner_heads = [1, 1*2, 1*4, 1*8]
+        sr_ratios = [4, 2, 1, 1]
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))] 
+        self.num_features = outer_dims[-1]     
+
+        # self.patch_embed = Stem(
+        #     img_size=img_size, in_chans=in_chans, outer_dim=outer_dims[0], inner_dim=inner_dims[0])
+        num_patches = 4096  # TODO: get from tensor shape
+        num_words = 214272
+        
+
+        depth = 0
+        self.word_merges = nn.ModuleList([])
+        self.sentence_merges = nn.ModuleList([])
+        self.stages = nn.ModuleList([])
+        for i in range(4):
+            if i > 0:
+                self.word_merges.append(PatchMerging2D_word(inner_dims[i-1], inner_dims[i]))
+                self.sentence_merges.append(PatchMerging2D_sentence(outer_dims[i-1]))
+            self.stages.append(Stage(depths[i], outer_dim=outer_dims[i], inner_dim=inner_dims[i],
+                        outer_head=outer_heads[i], inner_head=inner_heads[i],
+                        num_patches=num_patches // (2 ** i) // (2 ** i), num_words=num_words, mlp_ratio=mlp_ratio,
+                        qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate,
+                        drop_path=dpr[depth:depth+depths[i]], norm_layer=norm_layer, se=se, sr_ratio=sr_ratios[i])
+            )
+            depth += depths[i]
+        
+        self.norm = norm_layer(outer_dims[-1])
+
+        self.up_blocks = nn.ModuleList([])
+        for i in range(4):
+            self.up_blocks.append(UpsampleBlock(outer_dims[i],outer_dims[i]))
+           
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        if isinstance(m, nn.Conv2d):
+            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            fan_out //= m.groups
+            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+            if m.bias is not None:
+                m.bias.data.zero_()
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    @torch.jit.ignore
+    def no_weight_decay(self):
+        return {'outer_pos', 'inner_pos'}
+
+    def get_classifier(self):
+        return self.head
+
+    def reset_classifier(self, num_classes, global_pool=''):
+        self.num_classes = num_classes
+        self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
+
+    def forward_features(self, batch_dict):
+        # size = x.size()[2:]
+        bs = batch_dict['batch_size']
+        inner_tokens, outer_tokens = batch_dict['spatial_feature_batch'], batch_dict['mamba_feature_batch']
+        assert inner_tokens.shape[0]==outer_tokens.shape[0]
+        _, num_in, dim_in = inner_tokens.shape
+        _, num_out, dim_out = outer_tokens.shape
+
+        # inner_tokens, outer_tokens, (H_out, W_out), (H_in, W_in) = self.patch_embed(x)
+        outputs=[]
+        
+        for i in range(4):
+            if i > 0:
+                inner_tokens = self.word_merges[i-1](inner_tokens)
+                outer_tokens, H_out, W_out = self.sentence_merges[i-1](outer_tokens)
+            inner_tokens, outer_tokens = self.stages[i](inner_tokens, outer_tokens, H_out, W_out, H_in, W_in)
+            b,l,m=outer_tokens.shape
+            mid_out=outer_tokens.reshape(b,int(math.sqrt(l)),int(math.sqrt(l)),m).permute(0,3,1,2)
+            mid_out=self.up_blocks[i](mid_out)
+
+            outputs.append(mid_out)
+
+        return outputs
+
+    def forward(self, x):
+        x = self.forward_features(x)
+        return x
 
 
 class ResidualBlock(nn.Module):
@@ -804,7 +939,7 @@ if __name__ == '__main__':
         voxel_size=[0.16, 0.16, 4],
         point_cloud_range=np.array([0, -39.68, -3, 69.12, 39.68, 1])
     ).cuda()
-    pillar_vfe(batch_dict)  # ['pillar_feature_batch']
+    pillar_vfe(batch_dict)  # ['spatial_feature_batch']
 
     cfg_pclmamba = edict({
         'MAMBA':{
@@ -825,7 +960,10 @@ if __name__ == '__main__':
     pclmamba = PCLMamba(model_cfg=cfg_pclmamba).cuda()
     pclmamba(batch_dict)  # ['mamba_feature_batch']
 
-    sentence_fea = batch_dict['mamba_feature_batch']  # (16320, 96)
-    word_fea = batch_dict['pillar_feature_batch']  # (25993, 64)
+    sentence_fea = batch_dict['mamba_feature_batch']  # (B, num_node, 96) = [4, 4096, 96]
+    word_fea = batch_dict['spatial_feature_batch']    # (B, nx*ny, 64) = [4, 214272, 64]
+    
+
+    mim_net = MiM([2]*3,[8, 16, 32, 64, 128]).cuda()
 
     print("DEBUG: End")

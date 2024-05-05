@@ -1,4 +1,5 @@
-from .gnn import GNN
+# from .gnn import GNN  # jun: ip_feature enhanced
+from .gnn_marc import GNN  # marc's
 from .fc import CGNLNet
 from .gnn_BADet import BARefiner
 # from .gnn_new import GNN_New

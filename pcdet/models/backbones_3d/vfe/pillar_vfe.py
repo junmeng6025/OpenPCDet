@@ -111,7 +111,7 @@ class PillarVFE(VFETemplate):
             voxel_num_points: (num_voxels)
             voxel_coords (num_voxels, 4) [bs_idx, z=0, x, y]
         """
-        # save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
+        save_to_pkl(batch_dict, "batch_dict_bs%d"%batch_dict['batch_size'])
         voxel_features, voxel_num_points, coords = batch_dict['voxels'], batch_dict['voxel_num_points'], batch_dict['voxel_coords']
         points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)  # (num_voxels, 1, 3)
         f_cluster = voxel_features[:, :, :3] - points_mean  # (num_voxels, N_pts=32, 3): [x_diff, y_diff, z_diff]
