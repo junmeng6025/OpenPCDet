@@ -7,6 +7,12 @@ from ....ops.pointnet2.pointnet2_stack import pointnet2_modules as pointnet2_sta
 from ....ops.pointnet2.pointnet2_stack import pointnet2_utils as pointnet2_stack_utils
 from ....utils import common_utils
 
+import pickle
+PATH="/root/OpenPCDet/output/pillar_mamba_pkl/bs4"
+def save_pkl(data, fname, path=PATH):
+    with open('%s/%s.pkl'%(path, fname), 'wb') as f:
+        pickle.dump(data, f)
+
 
 def bilinear_interpolate_torch(im, x, y):
     """
@@ -126,8 +132,8 @@ class VoxelSetAbstraction(nn.Module):
                  num_rawpoint_features=None, **kwargs):
         super().__init__()
         self.model_cfg = model_cfg
-        self.voxel_size = voxel_size
-        self.point_cloud_range = point_cloud_range
+        self.voxel_size = voxel_size  # [x, y, z] = [0.5, 0.5, 0.1]
+        self.point_cloud_range = point_cloud_range  # [x1, y1, z1, x2, y2, z2] = [0, -40, -3, 70.4, 40, 1]
 
         SA_cfg = self.model_cfg.SA_LAYER
 
@@ -277,7 +283,9 @@ class VoxelSetAbstraction(nn.Module):
         if len(keypoints.shape) == 3:
             batch_idx = torch.arange(batch_size, device=keypoints.device).view(-1, 1).repeat(1, keypoints.shape[1]).view(-1, 1)
             keypoints = torch.cat((batch_idx.float(), keypoints.view(-1, 3)), dim=1)
-
+        
+        # batch_dict['key_points'] = keypoints
+        # save_pkl(batch_dict, "kpt_bs4")
         return keypoints
 
     @staticmethod
@@ -355,9 +363,9 @@ class VoxelSetAbstraction(nn.Module):
         if 'bev' in self.model_cfg.FEATURES_SOURCE:
             point_bev_features = self.interpolate_from_bev_features(
                 keypoints, batch_dict['spatial_features'], batch_dict['batch_size'],
-                bev_stride=batch_dict['spatial_features_stride']
+                bev_stride=batch_dict.get('spatial_features_stride', 8)
             )
-            point_features_list.append(point_bev_features)
+            point_features_list.append(point_bev_features)  # (B*N=4*2048, 256)
 
         batch_size = batch_dict['batch_size']
 
@@ -369,6 +377,10 @@ class VoxelSetAbstraction(nn.Module):
         if 'raw_points' in self.model_cfg.FEATURES_SOURCE:
             raw_points = batch_dict['points']
 
+            # filter_neighbors_with_roi=self.model_cfg.SA_LAYER['raw_points'].get('FILTER_NEIGHBOR_WITH_ROI', False)
+            # radius_of_neighbor=self.model_cfg.SA_LAYER['raw_points'].get('RADIUS_OF_NEIGHBOR_WITH_ROI', None)
+            # rois=batch_dict.get('rois', None)
+
             pooled_features = self.aggregate_keypoint_features_from_one_source(
                 batch_size=batch_size, aggregate_func=self.SA_rawpoints,
                 xyz=raw_points[:, 1:4],
@@ -379,7 +391,7 @@ class VoxelSetAbstraction(nn.Module):
                 radius_of_neighbor=self.model_cfg.SA_LAYER['raw_points'].get('RADIUS_OF_NEIGHBOR_WITH_ROI', None),
                 rois=batch_dict.get('rois', None)
             )
-            point_features_list.append(pooled_features)
+            point_features_list.append(pooled_features)  # (B*N=4*2048, 32)
 
         for k, src_name in enumerate(self.SA_layer_names):
             cur_coords = batch_dict['multi_scale_3d_features'][src_name].indices
@@ -399,13 +411,19 @@ class VoxelSetAbstraction(nn.Module):
                 rois=batch_dict.get('rois', None)
             )
 
-            point_features_list.append(pooled_features)
+            point_features_list.append(pooled_features)  # (B*N=4*2048, 32 | 64 | 128 | 128)
 
         point_features = torch.cat(point_features_list, dim=-1)
 
-        batch_dict['point_features_before_fusion'] = point_features.view(-1, point_features.shape[-1])
-        point_features = self.vsa_point_feature_fusion(point_features.view(-1, point_features.shape[-1]))
+        batch_dict['point_features_before_fusion'] = point_features.view(-1, point_features.shape[-1])  # (8192, 640) = (B*N, 256+32+32+64+128+128)
+        point_features = self.vsa_point_feature_fusion(point_features.view(-1, point_features.shape[-1]))  # 640 -> 128
 
         batch_dict['point_features'] = point_features  # (BxN, C)
         batch_dict['point_coords'] = keypoints  # (BxN, 4)
+        
+        # vis_dict = {}
+        # vis_dict['batch_size']=batch_dict['batch_size']
+        # vis_dict['key_points']=batch_dict['point_coords']
+        # vis_dict['raw_pts']=batch_dict['points']
+        # save_pkl(vis_dict, "kpt_waymo_bs2")
         return batch_dict

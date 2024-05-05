@@ -3,14 +3,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from sklearn.metrics import pairwise_distances
+import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 from ....ops.pointnet2.pointnet2_stack import pointnet2_modules as pointnet2_stack_modules
 from ....ops.pointnet2.pointnet2_stack import pointnet2_utils as pointnet2_stack_utils
 from ....utils import common_utils
 
 import pickle
-PATH="/root/OpenPCDet/output/pillar_mamba_pkl/bs4"
+PATH="/root/OpenPCDet/output/pillar_mamba_pkl/pillar_fps"
 def save_pkl(data, fname, path=PATH):
     with open('%s/%s.pkl'%(path, fname), 'wb') as f:
         pickle.dump(data, f)
@@ -134,8 +135,10 @@ class KeypointAbstraction(nn.Module):
                  num_rawpoint_features=None, **kwargs):
         super().__init__()
         self.model_cfg = model_cfg
-        self.voxel_size = voxel_size
-        self.point_cloud_range = point_cloud_range
+        self.voxel_size = voxel_size  # [sx, sy, sz] = [0.16, 0.16, 4]
+        self.point_cloud_range = point_cloud_range  # [x1, y1, z1, x2, y2, z2] = [0, -39.68, -3, 69.12, 39.68, 1]
+        # nx = (x2 - x1)/sx = (39.68 + 39.68)/0.16 = 496
+        # ny = (y2 - y1)/sy = 69.12/0.16 = 432
 
         SA_cfg = self.model_cfg.SA_LAYER
 
@@ -161,9 +164,6 @@ class KeypointAbstraction(nn.Module):
             self.SA_layer_names.append(src_name)
 
             c_in += cur_num_c_out
-
-        # print("SA_layers:")
-        # print(self.SA_layers)
 
         if 'bev' in self.model_cfg.FEATURES_SOURCE:
             c_bev = num_bev_features
@@ -213,6 +213,45 @@ class KeypointAbstraction(nn.Module):
 
         point_bev_features = torch.cat(point_bev_features_list, dim=0)  # (N1 + N2 + ..., C)
         return point_bev_features
+    
+    def mapping_neighbor_keypoint_to_voxel(self, keypoints, kp_features, spatial_features, batch_size):
+        """
+        use voxel_coord (pillar_coord) as index to get corresponding keypoint features
+        Args:
+            keypoints: (N1 + N2 + ..., 4) [bs_idx, x, y, z]
+            bev_features: (B, C, H, W)
+            batch_size:
+        Returns:
+            kp_to_voxel_map: (B, C, H, W)
+        """
+        
+        x_idxs = (keypoints[:, 1] - self.point_cloud_range[0]) / self.voxel_size[0]
+        y_idxs = (keypoints[:, 2] - self.point_cloud_range[1]) / self.voxel_size[1]
+        x_idxs = torch.floor(x_idxs).long()  # 0-431
+        y_idxs = torch.floor(y_idxs).long()  # 0-495
+        # print("x idxs: %d - %d"%(torch.min(x_idxs), torch.max(x_idxs)))
+        # print("y idxs: %d - %d"%(torch.min(y_idxs), torch.max(y_idxs)))
+
+        kp_to_voxel_map = torch.zeros_like(spatial_features)  # [bs, C, H, W]
+        kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
+        print("DEBUG: start mapping ...")
+        for k in range(batch_size):
+            bs_mask = (keypoints[:, 0] == k)
+            print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
+            cur_x_idxs = x_idxs[bs_mask]
+            cur_y_idxs = y_idxs[bs_mask]
+            cur_kp_to_voxel_map = kp_to_voxel_map[k]
+            assert kp_features.shape[-1] == cur_kp_to_voxel_map.shape[-1]  # make sure feature dims of kp & pillar feasible
+            to_be_write = cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :]
+            to_write = kp_features[bs_mask, :]
+
+            cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
+        
+        kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, C, H, W]
+        pillar_keypoint_features = torch.add(spatial_features, kp_to_voxel_map)
+        # kp_to_pillar_features = spatial_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
+        save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
+        return pillar_keypoint_features
 
     def sectorized_proposal_centric_sampling(self, roi_boxes, points):
         """
@@ -415,20 +454,17 @@ class KeypointAbstraction(nn.Module):
                 radius_of_neighbor=self.model_cfg.SA_LAYER[src_name].get('RADIUS_OF_NEIGHBOR_WITH_ROI', None),
                 rois=batch_dict.get('rois', None)
             )
-
             point_features_list.append(pooled_features)  # (B*N=4*2048, 32 | 64 | 128 | 128)
 
         point_features = torch.cat(point_features_list, dim=-1)
 
-        batch_dict['point_features_before_fusion'] = point_features.view(-1, point_features.shape[-1])  # (8192, 640) = (B*N, 256+32+32+64+128+128)
-        point_features = self.vsa_point_feature_fusion(point_features.view(-1, point_features.shape[-1]))  # 640 -> 128
+        batch_dict['point_features_before_fusion'] = point_features.view(-1, point_features.shape[-1])  # (8192, 32) = (B*N, keypoint_feature)
+        point_features = self.vsa_point_feature_fusion(point_features.view(-1, point_features.shape[-1]))  # 32 -> 64
 
         batch_dict['point_features'] = point_features  # (BxN, C)
         batch_dict['point_coords'] = keypoints  # (BxN, 4)
+
+        pillar_keypoint_features = self.mapping_neighbor_keypoint_to_voxel(keypoints, point_features, batch_dict['spatial_features'], batch_dict['batch_size'])
+        batch_dict['pillar_keypoint_features'] = pillar_keypoint_features
         
-        # vis_dict = {}
-        # vis_dict['batch_size']=batch_dict['batch_size']
-        # vis_dict['key_points']=batch_dict['point_coords']
-        # vis_dict['raw_pts']=batch_dict['points']
-        # save_pkl(vis_dict, "kpt_waymo_bs2")
         return batch_dict
