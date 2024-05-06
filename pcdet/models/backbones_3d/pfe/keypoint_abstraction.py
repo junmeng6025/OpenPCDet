@@ -190,8 +190,9 @@ class KeypointAbstraction(nn.Module):
         self.num_point_features = self.model_cfg.NUM_OUTPUT_FEATURES
         self.num_point_features_before_fusion = c_in
         
-        self.mamba_dim = 64  # fit with 2D backbone
-        self.patch_embed = self.make_patch_embed(in_chans=self.num_point_features, embed_dim=self.mamba_dim, patch_size=4, patch_norm=True, norm_layer=nn.LayerNorm, channel_first=False)
+        self.mamba_dim = self.model_cfg.MAMBA_FEA_DIM  # 64, fit with 2D backbone
+        self.mamba_stride = self.model_cfg.MAMBA_STRIDE
+        self.patch_embed = self.make_patch_embed(in_chans=self.num_point_features, embed_dim=self.mamba_dim, patch_size=self.mamba_stride, patch_norm=True, norm_layer=nn.LayerNorm, channel_first=False)
         self.vssm = VSSBlock(hidden_dim=self.mamba_dim, drop_path=0.1)
     
     @staticmethod
@@ -234,7 +235,7 @@ class KeypointAbstraction(nn.Module):
         point_bev_features = torch.cat(point_bev_features_list, dim=0)  # (N1 + N2 + ..., C)
         return point_bev_features
     
-    def mapping_neighbor_keypoint_to_voxel(self, keypoints, kp_features, spatial_features, batch_size):
+    def mapping_neighbor_keypoint_to_voxel(self, keypoints, kp_features, scatter_features, batch_size):
         """
         use voxel_coord (pillar_coord) as index to get corresponding keypoint features
         Args:
@@ -252,12 +253,12 @@ class KeypointAbstraction(nn.Module):
         # print("x idxs: %d - %d"%(torch.min(x_idxs), torch.max(x_idxs)))
         # print("y idxs: %d - %d"%(torch.min(y_idxs), torch.max(y_idxs)))
 
-        kp_to_voxel_map = torch.zeros_like(spatial_features)  # [bs, C, H, W]
+        kp_to_voxel_map = torch.zeros_like(scatter_features)  # [bs, C, H, W]
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
         # print("DEBUG: start mapping ...")
         for k in range(batch_size):
             bs_mask = (keypoints[:, 0] == k)
-            print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
+            # print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
             cur_x_idxs = x_idxs[bs_mask]
             cur_y_idxs = y_idxs[bs_mask]
             cur_kp_to_voxel_map = kp_to_voxel_map[k]
@@ -265,8 +266,8 @@ class KeypointAbstraction(nn.Module):
             cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
         
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, C, H, W]
-        pillar_keypoint_features = torch.add(spatial_features, kp_to_voxel_map)
-        # kp_to_pillar_features = spatial_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
+        pillar_keypoint_features = torch.add(scatter_features, kp_to_voxel_map)
+        # kp_to_pillar_features = scatter_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
         # save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
         return pillar_keypoint_features
     
@@ -430,7 +431,7 @@ class KeypointAbstraction(nn.Module):
         point_features_list = []
         if 'bev' in self.model_cfg.FEATURES_SOURCE:
             point_bev_features = self.interpolate_from_bev_features(
-                keypoints, batch_dict['spatial_features'], batch_dict['batch_size'],
+                keypoints, batch_dict['scatter_features'], batch_dict['batch_size'],
                 bev_stride=batch_dict['spatial_features_stride']
             )
             point_features_list.append(point_bev_features)  # (B*N=4*2048, 256)
@@ -488,7 +489,7 @@ class KeypointAbstraction(nn.Module):
         batch_dict['point_features'] = point_features  # (BxN, C)
         batch_dict['point_coords'] = keypoints  # (BxN, 4)
 
-        pillar_keypoint_features = self.mapping_neighbor_keypoint_to_voxel(keypoints, point_features, batch_dict['spatial_features'], batch_dict['batch_size'])
+        pillar_keypoint_features = self.mapping_neighbor_keypoint_to_voxel(keypoints, point_features, batch_dict['scatter_features'], batch_dict['batch_size'])
         batch_dict['pillar_keypoint_features'] = pillar_keypoint_features
 
         pillar_mamba_features = self.calc_mamba_feature(pillar_keypoint_features)
