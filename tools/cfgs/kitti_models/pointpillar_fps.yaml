@@ -51,7 +51,7 @@ MODEL:
     NAME: PointPillarFPS
 
     PFE:
-        NAME: KeypointAbstraction
+        NAME: PillarMambaEncoder
         POINT_SOURCE: raw_points
         NUM_KEYPOINTS: 2048
         NUM_OUTPUT_FEATURES: 64  #128

@@ -57,7 +57,7 @@ class SigmoidFocalClassificationLoss(nn.Module):
         """
         pred_sigmoid = torch.sigmoid(input)
         alpha_weight = target * self.alpha + (1 - target) * (1 - self.alpha)
-        pt = target * (1.0 - pred_sigmoid) + (1.0 - target) * pred_sigmoid  # 321408
+        pt = target * (1.0 - pred_sigmoid) + (1.0 - target) * pred_sigmoid  # (B, 321408, 3)
         focal_weight = alpha_weight * torch.pow(pt, self.gamma)
 
         bce_loss = self.sigmoid_cross_entropy_with_logits(input, target)

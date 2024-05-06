@@ -85,14 +85,14 @@ class BaseBEVBackbone(nn.Module):
                 spatial_features
         Returns:
         """
-        spatial_features = data_dict['spatial_features']  # pp: (B, 64, 496, 432) / mamba: (B, 64, 124, 108)
+        spatial_features = data_dict['spatial_features']  # pp: (B, 64, 496, 432) / mamba: (B, 64, 248, 216), patch=2
         ups = []
         ret_dict = {}
         x = spatial_features
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
 
-            stride = int(spatial_features.shape[2] / x.shape[2])  # pp: 2 / mamba: 2
+            stride = int(spatial_features.shape[2] / x.shape[2])  # s0, s0*s1, s0*s1*s2
             ret_dict['spatial_features_%dx' % stride] = x
             """
             pp:
@@ -100,10 +100,6 @@ class BaseBEVBackbone(nn.Module):
                 4x: (B, 128, 124, 108)
                 8x: (B, 256, 62, 54)
             mamba:
-                stride [2, 2, 2]
-                2x: (B, 64, 62, 54)
-                4x: (B, 128, 31, 27)
-                7x: (B, 256, 16, 14)
                 stride [1, 2, 2]
                 1x: (B, 64, 248, 216)
                 2x: (B, 128, 124, 108)

@@ -1,7 +1,7 @@
 from .voxel_set_abstraction import VoxelSetAbstraction
-from .keypoint_abstraction import KeypointAbstraction
+from .pillar_mamba_encoder import PillarMambaEncoder
 
 __all__ = {
     'VoxelSetAbstraction': VoxelSetAbstraction,
-    'KeypointAbstraction': KeypointAbstraction,
+    'PillarMambaEncode': PillarMambaEncoder,
 }
