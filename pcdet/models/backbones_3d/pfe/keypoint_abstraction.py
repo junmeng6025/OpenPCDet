@@ -9,6 +9,7 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 from ....ops.pointnet2.pointnet2_stack import pointnet2_modules as pointnet2_stack_modules
 from ....ops.pointnet2.pointnet2_stack import pointnet2_utils as pointnet2_stack_utils
 from ....utils import common_utils
+from ...mamba.vmamba import VSSBlock, Permute
 
 import pickle
 PATH="/root/OpenPCDet/output/pillar_mamba_pkl/pillar_fps"
@@ -129,6 +130,11 @@ def sector_fps(points, num_sampled_points, num_sectors):
 
     return sampled_points
 
+# class VMambaBlock(nn.Module):
+#     def __init__(self, **kwargs):
+#         super().__init__()
+
+
 
 class KeypointAbstraction(nn.Module):
     def __init__(self, model_cfg, voxel_size, point_cloud_range, num_bev_features=None,
@@ -183,6 +189,20 @@ class KeypointAbstraction(nn.Module):
         )
         self.num_point_features = self.model_cfg.NUM_OUTPUT_FEATURES
         self.num_point_features_before_fusion = c_in
+        
+        self.mamba_dim = 64  # fit with 2D backbone
+        self.patch_embed = self.make_patch_embed(in_chans=self.num_point_features, embed_dim=self.mamba_dim, patch_size=4, patch_norm=True, norm_layer=nn.LayerNorm, channel_first=False)
+        self.vssm = VSSBlock(hidden_dim=self.mamba_dim, drop_path=0.1)
+    
+    @staticmethod
+    def make_patch_embed(in_chans, embed_dim, patch_size, patch_norm=True, norm_layer=nn.LayerNorm, channel_first=False):
+        # TODO: patch_size = 4 or 1 ?
+        # if channel first, then Norm and Output are both channel_first
+        return nn.Sequential(
+            nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size, bias=True),
+            (nn.Identity() if channel_first else Permute(0, 2, 3, 1)),
+            (norm_layer(embed_dim) if patch_norm else nn.Identity()),
+        )
 
     def interpolate_from_bev_features(self, keypoints, bev_features, batch_size, bev_stride):
         """
@@ -234,7 +254,7 @@ class KeypointAbstraction(nn.Module):
 
         kp_to_voxel_map = torch.zeros_like(spatial_features)  # [bs, C, H, W]
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
-        print("DEBUG: start mapping ...")
+        # print("DEBUG: start mapping ...")
         for k in range(batch_size):
             bs_mask = (keypoints[:, 0] == k)
             print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
@@ -242,16 +262,20 @@ class KeypointAbstraction(nn.Module):
             cur_y_idxs = y_idxs[bs_mask]
             cur_kp_to_voxel_map = kp_to_voxel_map[k]
             assert kp_features.shape[-1] == cur_kp_to_voxel_map.shape[-1]  # make sure feature dims of kp & pillar feasible
-            to_be_write = cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :]
-            to_write = kp_features[bs_mask, :]
-
             cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
         
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, C, H, W]
         pillar_keypoint_features = torch.add(spatial_features, kp_to_voxel_map)
         # kp_to_pillar_features = spatial_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
-        save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
+        # save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
         return pillar_keypoint_features
+    
+    def calc_mamba_feature(self, pillar_scatter_batch):
+        pillar_mamba_embed = self.patch_embed(pillar_scatter_batch)  # (B, H/ps, W/ps, fea_dim) = (4, 124, 108, 96)
+        pillar_mamba_feature = self.vssm(pillar_mamba_embed)
+        pillar_mamba_feature = pillar_mamba_feature.permute(0, 3, 1, 2)  # (4, 96, 124, 108)
+
+        return pillar_mamba_feature
 
     def sectorized_proposal_centric_sampling(self, roi_boxes, points):
         """
@@ -466,5 +490,33 @@ class KeypointAbstraction(nn.Module):
 
         pillar_keypoint_features = self.mapping_neighbor_keypoint_to_voxel(keypoints, point_features, batch_dict['spatial_features'], batch_dict['batch_size'])
         batch_dict['pillar_keypoint_features'] = pillar_keypoint_features
+
+        pillar_mamba_features = self.calc_mamba_feature(pillar_keypoint_features)
+        batch_dict['spatial_features'] = pillar_mamba_features  # # (B, H/ps, W/ps, fea_dim) = (4, 124, 108, 96)
         
         return batch_dict
+    
+    # class MambaCoder(nn.Module):
+    #     def __init__(self, model_cfg, **kwargs):
+    #         super().__init__()
+    #         self.model_cfg = model_cfg
+    #         self.vssm = VSSBlock(
+    #                 hidden_dim=dim, 
+    #                 drop_path=drop_path[d],
+    #                 norm_layer=norm_layer,
+    #                 channel_first=channel_first,
+    #                 ssm_d_state=ssm_d_state,
+    #                 ssm_ratio=ssm_ratio,
+    #                 ssm_dt_rank=ssm_dt_rank,
+    #                 ssm_act_layer=ssm_act_layer,
+    #                 ssm_conv=ssm_conv,
+    #                 ssm_conv_bias=ssm_conv_bias,
+    #                 ssm_drop_rate=ssm_drop_rate,
+    #                 ssm_init=ssm_init,
+    #                 forward_type=forward_type,
+    #                 mlp_ratio=mlp_ratio,
+    #                 mlp_act_layer=mlp_act_layer,
+    #                 mlp_drop_rate=mlp_drop_rate,
+    #                 gmlp=gmlp,
+    #                 use_checkpoint=use_checkpoint,
+    #             )
