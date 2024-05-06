@@ -22,6 +22,7 @@ from tools.process_tools.logger import CustomEncoder
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar_fps.yaml", help='specify the config for training')
+    # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar.yaml", help='specify the config for training')
     # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pv_rcnn.yaml", help='specify the config for training')
 
     parser.add_argument('--batch_size', type=int, default=4, required=False, help='batch size for training')

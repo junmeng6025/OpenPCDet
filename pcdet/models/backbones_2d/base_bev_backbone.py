@@ -100,7 +100,7 @@ class BaseBEVBackbone(nn.Module):
                 ups.append(x)
 
         if len(ups) > 1:
-            x = torch.cat(ups, dim=1)
+            x = torch.cat(ups, dim=1)  # pointpillar: (B, 128, H_in/2, W_in/2)
         elif len(ups) == 1:
             x = ups[0]
 
