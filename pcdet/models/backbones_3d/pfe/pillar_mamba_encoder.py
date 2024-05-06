@@ -136,7 +136,7 @@ def sector_fps(points, num_sampled_points, num_sectors):
 
 
 
-class KeypointAbstraction(nn.Module):
+class PillarMambaEncoder(nn.Module):
     def __init__(self, model_cfg, voxel_size, point_cloud_range, num_bev_features=None,
                  num_rawpoint_features=None, **kwargs):
         super().__init__()
@@ -240,6 +240,7 @@ class KeypointAbstraction(nn.Module):
         use voxel_coord (pillar_coord) as index to get corresponding keypoint features
         Args:
             keypoints: (N1 + N2 + ..., 4) [bs_idx, x, y, z]
+            kp_features:
             bev_features: (B, C, H, W)
             batch_size:
         Returns:
@@ -255,7 +256,7 @@ class KeypointAbstraction(nn.Module):
 
         kp_to_voxel_map = torch.zeros_like(scatter_features)  # [bs, C, H, W]
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
-        # print("DEBUG: start mapping ...")
+        print("DEBUG: start mapping ...")
         for k in range(batch_size):
             bs_mask = (keypoints[:, 0] == k)
             # print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
