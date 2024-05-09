@@ -18,13 +18,13 @@ class PillarMambaScatter(nn.Module):
         for batch_idx in range(batch_size):
             spatial_feature = torch.zeros(
                 self.num_bev_features,
-                self.nz * self.nx * self.ny,
+                self.nz * self.nx * self.ny,  # nz=1, nx=432, ny=496
                 dtype=pillar_features.dtype,
-                device=pillar_features.device)
+                device=pillar_features.device)  # shape: (64, 214272)
 
-            batch_mask = coords[:, 0] == batch_idx
-            this_coords = coords[batch_mask, :]
-            indices = this_coords[:, 1] + this_coords[:, 2] * self.nx + this_coords[:, 3]
+            batch_mask = coords[:, 0] == batch_idx  # 12566
+            this_coords = coords[batch_mask, :]  # 7070
+            indices = this_coords[:, 1] + this_coords[:, 2] * self.nx + this_coords[:, 3]  # voxel_coords: (bs_idx, z, y, x)
             indices = indices.type(torch.long)
             pillars = pillar_features[batch_mask, :]
             pillars = pillars.t()

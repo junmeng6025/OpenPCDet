@@ -3,5 +3,5 @@ from .pillar_mamba_encoder import PillarMambaEncoder
 
 __all__ = {
     'VoxelSetAbstraction': VoxelSetAbstraction,
-    'PillarMambaEncode': PillarMambaEncoder,
+    'PillarMambaEncoder': PillarMambaEncoder,
 }
