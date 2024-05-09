@@ -143,8 +143,8 @@ class PillarMambaEncoder(nn.Module):
         self.model_cfg = model_cfg
         self.voxel_size = voxel_size  # [sx, sy, sz] = [0.16, 0.16, 4]
         self.point_cloud_range = point_cloud_range  # [x1, y1, z1, x2, y2, z2] = [0, -39.68, -3, 69.12, 39.68, 1]
-        # nx = (x2 - x1)/sx = (39.68 + 39.68)/0.16 = 496
-        # ny = (y2 - y1)/sy = 69.12/0.16 = 432
+        # nx = (x2 - x1)/sx = 69.12/0.16 = 432
+        # ny = (y2 - y1)/sy = (39.68 + 39.68)/0.16 = 496 
 
         SA_cfg = self.model_cfg.SA_LAYER
 
@@ -235,7 +235,7 @@ class PillarMambaEncoder(nn.Module):
         point_bev_features = torch.cat(point_bev_features_list, dim=0)  # (N1 + N2 + ..., C)
         return point_bev_features
     
-    def mapping_neighbor_keypoint_to_voxel(self, keypoints, kp_features, scatter_features, batch_size):
+    def keypoint_feature_scatter(self, keypoints, kp_features, scatter_features, batch_size):
         """
         use voxel_coord (pillar_coord) as index to get corresponding keypoint features
         Args:
@@ -249,28 +249,93 @@ class PillarMambaEncoder(nn.Module):
         
         x_idxs = (keypoints[:, 1] - self.point_cloud_range[0]) / self.voxel_size[0]
         y_idxs = (keypoints[:, 2] - self.point_cloud_range[1]) / self.voxel_size[1]
-        x_idxs = torch.floor(x_idxs).long()  # 0-431
-        y_idxs = torch.floor(y_idxs).long()  # 0-495
+        x_idxs = torch.floor(x_idxs).type(torch.long)  # 0-431 -> W = 432
+        y_idxs = torch.floor(y_idxs).type(torch.long)  # 0-495 -> H = 496
         # print("x idxs: %d - %d"%(torch.min(x_idxs), torch.max(x_idxs)))
         # print("y idxs: %d - %d"%(torch.min(y_idxs), torch.max(y_idxs)))
 
         kp_to_voxel_map = torch.zeros_like(scatter_features)  # [bs, C, H, W]
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
-        print("DEBUG: start mapping ...")
+        # print("DEBUG: start mapping ...")
         for k in range(batch_size):
             bs_mask = (keypoints[:, 0] == k)
             # print("DEBUG: Batch %d: %d keypoints"%(k, bs_mask.sum().item()))
+            num_kpt = bs_mask.sum().item()
             cur_x_idxs = x_idxs[bs_mask]
             cur_y_idxs = y_idxs[bs_mask]
             cur_kp_to_voxel_map = kp_to_voxel_map[k]
+            cur_kp_features = kp_features[bs_mask, :]
             assert kp_features.shape[-1] == cur_kp_to_voxel_map.shape[-1]  # make sure feature dims of kp & pillar feasible
-            cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
-        
+
+            # cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
+
+            for pt_id in range(num_kpt):
+                if cur_x_idxs[pt_id] > 431:
+                    cur_x_idxs[pt_id] = 431
+                if cur_y_idxs[pt_id] > 495:
+                    cur_y_idxs[pt_id] = 495
+                cur_kp_to_voxel_map[cur_x_idxs[pt_id], cur_y_idxs[pt_id], :] = cur_kp_features[pt_id]
+            
         kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, C, H, W]
         pillar_keypoint_features = torch.add(scatter_features, kp_to_voxel_map)
         # kp_to_pillar_features = scatter_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
         # save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
         return pillar_keypoint_features
+    
+    def keypoint_feature_scatter_v2(self, keypoints, kp_features, scatter_features, batch_size):
+        """
+        use voxel_coord (pillar_coord) as index to get corresponding keypoint features
+        Args:
+            keypoints: (N1 + N2 + ..., 4) [bs_idx, x, y, z]  x: 0 ~ 69.12; y: -39.68 ~ 39.68
+            kp_features:
+            bev_features: (B, C, H, W)
+            batch_size:
+        Returns:
+            kp_to_voxel_map: (B, C, H, W)
+        """
+        [rg_x1, rg_y1, rg_z1, rg_x2, rg_y2, rg_z2] = self.point_cloud_range
+        [sz_x, sz_y, sz_z] = self.voxel_size
+        nx = int(math.floor((rg_x2 - rg_x1)/sz_x))  # 432 -> W
+        ny = int(math.floor((rg_y2 - rg_y1)/sz_y))  # 496 -> H
+        fea_dim = self.num_point_features
+
+        batch_scatter_kpt_feature = []
+        for b_idx in range(batch_size):
+            scatter_kpt_feature = torch.zeros(
+                fea_dim,
+                nx*ny,
+                dtype=kp_features.dtype,
+                device=kp_features.device
+            )
+            bs_mask = (keypoints[:, 0] == b_idx)
+            cur_kp_coord = keypoints[bs_mask, :]  # [b_idx, x, y, z]
+            print("x kpt: %d ~ %d"%(torch.min(keypoints[:, 1]), torch.max(keypoints[:, 1])))
+            print("y kpt: %d ~ %d"%(torch.min(keypoints[:, 2]), torch.max(keypoints[:, 2])))
+
+            cur_x_idxs = (cur_kp_coord[:, 1] - rg_x1)/sz_x
+            cur_x_idxs = torch.floor(cur_x_idxs).type(torch.int)
+            cur_y_idxs = (cur_kp_coord[:, 2] - rg_y1)/sz_y
+            cur_y_idxs = torch.floor(cur_y_idxs).type(torch.int)
+
+            print("x idxs: %d ~ %d"%(torch.min(cur_x_idxs), torch.max(cur_x_idxs)))
+            print("y idxs: %d ~ %d"%(torch.min(cur_y_idxs), torch.max(cur_y_idxs)))
+
+            flatten_idx = torch.add(cur_x_idxs, nx*cur_y_idxs)
+            flatten_idx.type(torch.long)
+
+            cur_kp_features = kp_features[bs_mask, :]
+            cur_kp_features = cur_kp_features.t()
+            assert scatter_kpt_feature.shape[0] == cur_kp_features.shape[0]  # fea dim feasible
+            scatter_kpt_feature[:, flatten_idx] = cur_kp_features
+
+            batch_scatter_kpt_feature.append(scatter_kpt_feature)
+
+        batch_scatter_kpt_feature = torch.stack(batch_scatter_kpt_feature, dim=0)
+        batch_scatter_kpt_feature = batch_scatter_kpt_feature.view(batch_size, fea_dim, ny, nx)  # [B, C, H, W]
+
+        pillar_keypoint_features = torch.add(scatter_features, batch_scatter_kpt_feature)
+        return pillar_keypoint_features
+
     
     def calc_mamba_feature(self, pillar_scatter_batch):
         pillar_mamba_embed = self.patch_embed(pillar_scatter_batch)  # (B, H/ps, W/ps, fea_dim) = (4, 124, 108, 96)
@@ -490,7 +555,7 @@ class PillarMambaEncoder(nn.Module):
         batch_dict['point_features'] = point_features  # (BxN, C)
         batch_dict['point_coords'] = keypoints  # (BxN, 4)
 
-        pillar_keypoint_features = self.mapping_neighbor_keypoint_to_voxel(keypoints, point_features, batch_dict['scatter_features'], batch_dict['batch_size'])
+        pillar_keypoint_features = self.keypoint_feature_scatter_v2(keypoints, point_features, batch_dict['scatter_features'], batch_dict['batch_size'])
         batch_dict['pillar_keypoint_features'] = pillar_keypoint_features
 
         pillar_mamba_features = self.calc_mamba_feature(pillar_keypoint_features)
