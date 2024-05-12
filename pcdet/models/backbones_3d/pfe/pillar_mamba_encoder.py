@@ -18,6 +18,16 @@ def save_pkl(data, fname, path=PATH):
         pickle.dump(data, f)
 
 
+def check_idx(idxs, lb, ub):
+    for idx in idxs:
+        if idx < lb:
+            idx=lb
+        elif idx > ub-1:
+            idx=ub-1
+        else:
+            continue
+
+
 def bilinear_interpolate_torch(im, x, y):
     """
     Args:
@@ -129,11 +139,6 @@ def sector_fps(points, num_sampled_points, num_sectors):
     sampled_points = xyz[sampled_pt_idxs]
 
     return sampled_points
-
-# class VMambaBlock(nn.Module):
-#     def __init__(self, **kwargs):
-#         super().__init__()
-
 
 
 class PillarMambaEncoder(nn.Module):
@@ -254,8 +259,8 @@ class PillarMambaEncoder(nn.Module):
         # print("x idxs: %d - %d"%(torch.min(x_idxs), torch.max(x_idxs)))
         # print("y idxs: %d - %d"%(torch.min(y_idxs), torch.max(y_idxs)))
 
-        kp_to_voxel_map = torch.zeros_like(scatter_features)  # [bs, C, H, W]
-        kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, W, H, C]
+        batch_scatter_kpt_feature = torch.zeros_like(scatter_features)  # [bs, C, H, W]
+        batch_scatter_kpt_feature = batch_scatter_kpt_feature.permute(0, 3, 2, 1)  # [bs, W, H, C]
         # print("DEBUG: start mapping ...")
         for k in range(batch_size):
             bs_mask = (keypoints[:, 0] == k)
@@ -263,26 +268,24 @@ class PillarMambaEncoder(nn.Module):
             num_kpt = bs_mask.sum().item()
             cur_x_idxs = x_idxs[bs_mask]
             cur_y_idxs = y_idxs[bs_mask]
-            cur_kp_to_voxel_map = kp_to_voxel_map[k]
+            cur_batch_scatter_kpt_feature = batch_scatter_kpt_feature[k]
             cur_kp_features = kp_features[bs_mask, :]
-            assert kp_features.shape[-1] == cur_kp_to_voxel_map.shape[-1]  # make sure feature dims of kp & pillar feasible
+            # assert kp_features.shape[-1] == cur_batch_scatter_kpt_feature.shape[-1]  # make sure feature dims of kp & pillar feasible
 
-            # cur_kp_to_voxel_map[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
+            # cur_batch_scatter_kpt_feature[cur_x_idxs, cur_y_idxs, :] = kp_features[bs_mask, :]
 
             for pt_id in range(num_kpt):
                 if cur_x_idxs[pt_id] > 431:
                     cur_x_idxs[pt_id] = 431
                 if cur_y_idxs[pt_id] > 495:
                     cur_y_idxs[pt_id] = 495
-                cur_kp_to_voxel_map[cur_x_idxs[pt_id], cur_y_idxs[pt_id], :] = cur_kp_features[pt_id]
+                cur_batch_scatter_kpt_feature[cur_x_idxs[pt_id], cur_y_idxs[pt_id], :] = cur_kp_features[pt_id]
             
-        kp_to_voxel_map = kp_to_voxel_map.permute(0, 3, 2, 1)  # [bs, C, H, W]
-        pillar_keypoint_features = torch.add(scatter_features, kp_to_voxel_map)
-        # kp_to_pillar_features = scatter_features_bhwc.permute(0, 3, 1, 2)  # [bs, C, H, W]
-        # save_pkl(pillar_keypoint_features, 'pillar_keypoint_features_bs4')
-        return pillar_keypoint_features
+        batch_scatter_kpt_feature = batch_scatter_kpt_feature.permute(0, 3, 2, 1)  # [bs, C, H, W]
+        
+        return batch_scatter_kpt_feature
     
-    def keypoint_feature_scatter_v2(self, keypoints, kp_features, scatter_features, batch_size):
+    def keypoint_feature_scatter_v2(self, keypoints, kp_features, batch_size):
         """
         use voxel_coord (pillar_coord) as index to get corresponding keypoint features
         Args:
@@ -291,7 +294,7 @@ class PillarMambaEncoder(nn.Module):
             bev_features: (B, C, H, W)
             batch_size:
         Returns:
-            kp_to_voxel_map: (B, C, H, W)
+            batch_scatter_kpt_feature: (B, C, H, W)
         """
         [rg_x1, rg_y1, rg_z1, rg_x2, rg_y2, rg_z2] = self.point_cloud_range
         [sz_x, sz_y, sz_z] = self.voxel_size
@@ -309,32 +312,35 @@ class PillarMambaEncoder(nn.Module):
             )
             bs_mask = (keypoints[:, 0] == b_idx)
             cur_kp_coord = keypoints[bs_mask, :]  # [b_idx, x, y, z]
-            print("x kpt: %d ~ %d"%(torch.min(keypoints[:, 1]), torch.max(keypoints[:, 1])))
-            print("y kpt: %d ~ %d"%(torch.min(keypoints[:, 2]), torch.max(keypoints[:, 2])))
+            # print("x kpt: %d ~ %d"%(torch.min(keypoints[:, 1]), torch.max(keypoints[:, 1])))   
+            # print("y kpt: %d ~ %d"%(torch.min(keypoints[:, 2]), torch.max(keypoints[:, 2])))
 
             cur_x_idxs = (cur_kp_coord[:, 1] - rg_x1)/sz_x
+            # check_idx(cur_x_idxs, lb=0, ub=nx)
             cur_x_idxs = torch.floor(cur_x_idxs).type(torch.int)
+            
             cur_y_idxs = (cur_kp_coord[:, 2] - rg_y1)/sz_y
+            # check_idx(cur_y_idxs, lb=0, ub=ny)
             cur_y_idxs = torch.floor(cur_y_idxs).type(torch.int)
 
-            print("x idxs: %d ~ %d"%(torch.min(cur_x_idxs), torch.max(cur_x_idxs)))
-            print("y idxs: %d ~ %d"%(torch.min(cur_y_idxs), torch.max(cur_y_idxs)))
+            # print("x idxs: %d ~ %d"%(torch.min(cur_x_idxs), torch.max(cur_x_idxs)))
+            # print("y idxs: %d ~ %d"%(torch.min(cur_y_idxs), torch.max(cur_y_idxs)))
 
-            flatten_idx = torch.add(cur_x_idxs, nx*cur_y_idxs)
+            # flatten_idx = torch.add(cur_x_idxs, nx*cur_y_idxs)
+            flatten_idx = cur_x_idxs + nx * cur_y_idxs
             flatten_idx.type(torch.long)
 
             cur_kp_features = kp_features[bs_mask, :]
             cur_kp_features = cur_kp_features.t()
-            assert scatter_kpt_feature.shape[0] == cur_kp_features.shape[0]  # fea dim feasible
+            # assert scatter_kpt_feature.shape[0] == cur_kp_features.shape[0]  # fea dim feasible
             scatter_kpt_feature[:, flatten_idx] = cur_kp_features
 
             batch_scatter_kpt_feature.append(scatter_kpt_feature)
 
-        batch_scatter_kpt_feature = torch.stack(batch_scatter_kpt_feature, dim=0)
+        batch_scatter_kpt_feature = torch.stack(batch_scatter_kpt_feature, dim=0)  # [B, C, H*W]
         batch_scatter_kpt_feature = batch_scatter_kpt_feature.view(batch_size, fea_dim, ny, nx)  # [B, C, H, W]
 
-        pillar_keypoint_features = torch.add(scatter_features, batch_scatter_kpt_feature)
-        return pillar_keypoint_features
+        return batch_scatter_kpt_feature
 
     
     def calc_mamba_feature(self, pillar_scatter_batch):
@@ -555,35 +561,12 @@ class PillarMambaEncoder(nn.Module):
         batch_dict['point_features'] = point_features  # (BxN, C)
         batch_dict['point_coords'] = keypoints  # (BxN, 4)
 
-        pillar_keypoint_features = self.keypoint_feature_scatter_v2(keypoints, point_features, batch_dict['scatter_features'], batch_dict['batch_size'])
+        # scatter_kpt_feature = self.keypoint_feature_scatter(keypoints, point_features, batch_dict['scatter_features'], batch_dict['batch_size'])
+        scatter_kpt_feature = self.keypoint_feature_scatter_v2(keypoints, point_features, batch_dict['batch_size'])
+        pillar_keypoint_features = torch.add(batch_dict['scatter_features'], scatter_kpt_feature)
         batch_dict['pillar_keypoint_features'] = pillar_keypoint_features
 
         pillar_mamba_features = self.calc_mamba_feature(pillar_keypoint_features)
         batch_dict['spatial_features'] = pillar_mamba_features  # # (B, H/ps, W/ps, fea_dim) = (4, 124, 108, 96)
         
         return batch_dict
-    
-    # class MambaCoder(nn.Module):
-    #     def __init__(self, model_cfg, **kwargs):
-    #         super().__init__()
-    #         self.model_cfg = model_cfg
-    #         self.vssm = VSSBlock(
-    #                 hidden_dim=dim, 
-    #                 drop_path=drop_path[d],
-    #                 norm_layer=norm_layer,
-    #                 channel_first=channel_first,
-    #                 ssm_d_state=ssm_d_state,
-    #                 ssm_ratio=ssm_ratio,
-    #                 ssm_dt_rank=ssm_dt_rank,
-    #                 ssm_act_layer=ssm_act_layer,
-    #                 ssm_conv=ssm_conv,
-    #                 ssm_conv_bias=ssm_conv_bias,
-    #                 ssm_drop_rate=ssm_drop_rate,
-    #                 ssm_init=ssm_init,
-    #                 forward_type=forward_type,
-    #                 mlp_ratio=mlp_ratio,
-    #                 mlp_act_layer=mlp_act_layer,
-    #                 mlp_drop_rate=mlp_drop_rate,
-    #                 gmlp=gmlp,
-    #                 use_checkpoint=use_checkpoint,
-    #             )
