@@ -4,6 +4,7 @@ from .point_rcnn import PointRCNN
 from .pointpillar import PointPillar
 from .pointpillar_fps import PointPillarFPS
 from .pv_rcnn import PVRCNN
+from .pv_rcnn_mamba import PVRCNN_Mamba
 from .second_net import SECONDNet
 from .second_net_iou import SECONDNetIoU
 from .caddn import CaDDN
@@ -27,6 +28,7 @@ __all__ = {
     'SECONDNet': SECONDNet,
     'PartA2Net': PartA2Net,
     'PVRCNN': PVRCNN,
+    'PVRCNN_Mamba': PVRCNN_Mamba,
     'PointPillar': PointPillar,
     'PointPillarFPS': PointPillarFPS,
     'PointRCNN': PointRCNN,

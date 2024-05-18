@@ -21,9 +21,11 @@ from tools.process_tools.logger import CustomEncoder
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar_fps.yaml", help='specify the config for training')
+    # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar_fps.yaml", help='specify the config for training')
     # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pointpillar.yaml", help='specify the config for training')
+
     # parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pv_rcnn.yaml", help='specify the config for training')
+    parser.add_argument('--cfg_file', type=str, default="cfgs/kitti_models/pv_rcnn_mamba.yaml", help='specify the config for training')
 
     parser.add_argument('--batch_size', type=int, default=2, required=False, help='batch size for training')
     parser.add_argument('--epochs', type=int, default=None, required=False, help='number of epochs to train for')
@@ -55,6 +57,8 @@ def parse_config():
     parser.add_argument('--use_amp', action='store_true', help='use mix precision training')
 
     args = parser.parse_args()
+
+    print("%s, using %s"%(args.extra_tag, args.cfg_file))
 
     cfg_from_yaml_file(args.cfg_file, cfg)
     cfg.TAG = Path(args.cfg_file).stem

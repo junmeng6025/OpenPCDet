@@ -11,6 +11,8 @@ from ....ops.pointnet2.pointnet2_stack import pointnet2_utils as pointnet2_stack
 from ....utils import common_utils
 from ...mamba.vmamba import VSSBlock, Permute
 
+# For DEBUG ============================================================
+# from .debug_vis_hist import vis_hist
 import pickle
 PATH="/root/OpenPCDet/output/pillar_mamba_pkl/pillar_fps"
 def save_pkl(data, fname, path=PATH):
@@ -197,7 +199,10 @@ class PillarMambaEncoder(nn.Module):
         
         self.mamba_dim = self.model_cfg.MAMBA_FEA_DIM  # 64, fit with 2D backbone
         self.mamba_stride = self.model_cfg.MAMBA_STRIDE
+
+        # TODO: use mlp
         self.patch_embed = self.make_patch_embed(in_chans=self.num_point_features, embed_dim=self.mamba_dim, patch_size=self.mamba_stride, patch_norm=True, norm_layer=nn.LayerNorm, channel_first=False)
+        
         self.vssm = VSSBlock(hidden_dim=self.mamba_dim, drop_path=0.1)
     
     @staticmethod
@@ -301,6 +306,8 @@ class PillarMambaEncoder(nn.Module):
         nx = int(math.floor((rg_x2 - rg_x1)/sz_x))  # 432 -> W
         ny = int(math.floor((rg_y2 - rg_y1)/sz_y))  # 496 -> H
         fea_dim = self.num_point_features
+        keypoints = keypoints.contiguous()
+        kp_features = kp_features.contiguous()
 
         batch_scatter_kpt_feature = []
         for b_idx in range(batch_size):
@@ -332,6 +339,7 @@ class PillarMambaEncoder(nn.Module):
 
             cur_kp_features = kp_features[bs_mask, :]
             cur_kp_features = cur_kp_features.t()
+            cur_kp_features = cur_kp_features.contiguous()
             # assert scatter_kpt_feature.shape[0] == cur_kp_features.shape[0]  # fea dim feasible
             scatter_kpt_feature[:, flatten_idx] = cur_kp_features
 
@@ -344,7 +352,7 @@ class PillarMambaEncoder(nn.Module):
 
     
     def calc_mamba_feature(self, pillar_scatter_batch):
-        pillar_mamba_embed = self.patch_embed(pillar_scatter_batch)  # (B, H/ps, W/ps, fea_dim) = (4, 124, 108, 96)
+        pillar_mamba_embed = self.patch_embed(pillar_scatter_batch)  # (B, H/ps, W/ps, fea_dim) = (B, 248, 216, 64)
         pillar_mamba_feature = self.vssm(pillar_mamba_embed)
         pillar_mamba_feature = pillar_mamba_feature.permute(0, 3, 1, 2)  # (4, 96, 124, 108)
 
