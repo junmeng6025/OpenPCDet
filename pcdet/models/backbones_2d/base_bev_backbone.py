@@ -24,7 +24,7 @@ class BaseBEVBackbone(nn.Module):
             upsample_strides = num_upsample_filters = []
 
         num_levels = len(layer_nums)
-        c_in_list = [input_channels, *num_filters[:-1]]
+        c_in_list = [input_channels, *num_filters[:-1]]  # [256, 128]
         self.blocks = nn.ModuleList()
         self.deblocks = nn.ModuleList()
         for idx in range(num_levels):
@@ -82,10 +82,15 @@ class BaseBEVBackbone(nn.Module):
         """
         Args:
             data_dict:
-                spatial_features
+                spatial_features: [B, C, H, W]
         Returns:
         """
-        spatial_features = data_dict['spatial_features']  # pp: (B, 64, 496, 432) / mamba: (B, 64, 248, 216), patch=2
+        # print("Blocks:")
+        # print(self.blocks)
+        # print("Deblocks:")
+        # print(self.deblocks)
+
+        spatial_features = data_dict['spatial_features']  # pp: (B, 64, 496, 432) / mamba: (B, 64, 248, 216), patch=2  / pvrcnn: (B, 256, 200, 176)
         ups = []
         ret_dict = {}
         x = spatial_features
@@ -104,6 +109,10 @@ class BaseBEVBackbone(nn.Module):
                 1x: (B, 64, 248, 216)
                 2x: (B, 128, 124, 108)
                 4x: (B, 256, 62, 54)
+            pvrcnn:
+                stride: [1, 2]
+                1x: (B, 128, 200, 176)
+                2x: (B, 256, 100, 88)
             """
             if len(self.deblocks) > 0:
                 ups.append(self.deblocks[i](x))
@@ -118,7 +127,7 @@ class BaseBEVBackbone(nn.Module):
         if len(self.deblocks) > len(self.blocks):
             x = self.deblocks[-1](x)
 
-        data_dict['spatial_features_2d'] = x
+        data_dict['spatial_features_2d'] = x   # (B, 128, H_in/str, W_in/str)  pp: (B, 128, 248, 216) / mamba:() / pvrcnn: (B, 512, 200, 176)
 
         return data_dict
 

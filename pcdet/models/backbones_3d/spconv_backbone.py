@@ -137,25 +137,25 @@ class VoxelBackBone8x(nn.Module):
             batch_dict:
                 encoded_spconv_tensor: sparse tensor
         """
-        voxel_features, voxel_coords = batch_dict['voxel_features'], batch_dict['voxel_coords']
+        voxel_features, voxel_coords = batch_dict['voxel_features'], batch_dict['voxel_coords']  # (3200, 4); (3200, 4)
         batch_size = batch_dict['batch_size']
         input_sp_tensor = spconv.SparseConvTensor(
             features=voxel_features,
             indices=voxel_coords.int(),
             spatial_shape=self.sparse_shape,
             batch_size=batch_size
-        )
+        )  # [41, 1600, 1408]  _fea: [32000, 4]
 
-        x = self.conv_input(input_sp_tensor)
+        x = self.conv_input(input_sp_tensor)  # [41, 1600, 1408]  _fea: [32000, 16]
 
-        x_conv1 = self.conv1(x)
-        x_conv2 = self.conv2(x_conv1)
-        x_conv3 = self.conv3(x_conv2)
-        x_conv4 = self.conv4(x_conv3)
+        x_conv1 = self.conv1(x)        # [41, 1600, 1408]  _fea: [32000, 16]
+        x_conv2 = self.conv2(x_conv1)  # [21, 800, 704]  _fea: [65148, 32]
+        x_conv3 = self.conv3(x_conv2)  # [11, 400, 352]  _fea: [48144, 64]
+        x_conv4 = self.conv4(x_conv3)  # [5,  200, 176]  _fea: [23615, 64]
 
         # for detection head
         # [200, 176, 5] -> [200, 176, 2]
-        out = self.conv_out(x_conv4)
+        out = self.conv_out(x_conv4)  # [2,  200, 176]  _fea: [18105, 128]
 
         batch_dict.update({
             'encoded_spconv_tensor': out,
