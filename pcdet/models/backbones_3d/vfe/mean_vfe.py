@@ -2,6 +2,12 @@ import torch
 
 from .vfe_template import VFETemplate
 
+import pickle
+PATH="/root/OpenPCDet/output/"
+def save_pkl(data, fname, path=PATH):
+    with open('%s/%s.pkl'%(path, fname), 'wb') as f:
+        pickle.dump(data, f)
+
 
 class MeanVFE(VFETemplate):
     def __init__(self, model_cfg, num_point_features, **kwargs):
@@ -22,6 +28,7 @@ class MeanVFE(VFETemplate):
         Returns:
             vfe_features: (num_voxels, C)
         """
+        # save_pkl(batch_dict, 'batch_dict_flop_bs2')
         voxel_features, voxel_num_points = batch_dict['voxels'], batch_dict['voxel_num_points']
         points_mean = voxel_features[:, :, :].sum(dim=1, keepdim=False)
         normalizer = torch.clamp_min(voxel_num_points.view(-1, 1), min=1.0).type_as(voxel_features)

@@ -63,10 +63,13 @@ class BaseBEVBackboneMamba(nn.Module):
             cur_layers.extend([
                 Permute(0, 2, 3, 1)  # [B, C, H, W] -> [B, H, W, C]
             ])
-            for k in range(layer_nums[idx]):
-                cur_layers.extend([
-                    VSSBlock(num_filters[idx])
-                ])
+            # for k in range(layer_nums[idx]):
+            #     cur_layers.extend([
+            #         VSSBlock(num_filters[idx])
+            #     ])
+            cur_layers.extend([
+                VSSBlock(num_filters[idx])
+            ])
             cur_layers.extend([
                 Permute(0, 3, 1, 2)  # [B, H, W, C] -> [B, C, H, W]
             ])

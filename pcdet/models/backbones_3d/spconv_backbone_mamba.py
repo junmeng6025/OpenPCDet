@@ -210,7 +210,7 @@ class VoxelBackBone8x_Mamba(nn.Module):
             batch_dict:
                 batch_size: int
                 vfe_features: (num_voxels, C)
-                voxel_coords: (num_voxels, 4), [batch_idx, z_idx, y_idx, x_idx]
+                voxel_coords: (num_voxels, 4), [batch_idx, z_idx, x_idx, y_idx]
         Returns:
             batch_dict:
                 encoded_spconv_tensor: sparse tensor
@@ -223,8 +223,6 @@ class VoxelBackBone8x_Mamba(nn.Module):
             spatial_shape=self.sparse_shape,
             batch_size=batch_size
         )
-
-        # input_sp_tensor = voxel_features
 
         # x = self.conv_input(input_sp_tensor)
         x = self.vss_input(input_sp_tensor)

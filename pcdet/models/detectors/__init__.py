@@ -1,5 +1,7 @@
 from .detector3d_template import Detector3DTemplate
 from .PartA2_net import PartA2Net
+from .PartA2_mamba import PartA2Net_Mamba
+from .PartA2_relation_mamba import PartA2NetRelationMamba
 from .point_rcnn import PointRCNN
 from .pointpillar import PointPillar
 from .pointpillar_fps import PointPillarFPS
@@ -18,6 +20,7 @@ from .voxelnext import VoxelNeXt
 from .transfusion import TransFusion
 from .bevfusion import BevFusion
 from .pv_rcnn_relation import PVRCNNRelation
+from .pv_rcnn_relation_mamba import PVRCNNRelation_Mamba
 from .pv_rcnn_plusplus_relation import PVRCNNPlusPlusRelation
 from .centerpoint_twostage import CenterPointTwoStage
 from .PartA2_relation_net import PartA2NetRelation
@@ -27,6 +30,7 @@ __all__ = {
     'Detector3DTemplate': Detector3DTemplate,
     'SECONDNet': SECONDNet,
     'PartA2Net': PartA2Net,
+    'PartA2Net_Mamba': PartA2Net_Mamba,
     'PVRCNN': PVRCNN,
     'PVRCNN_Mamba': PVRCNN_Mamba,
     'PointPillar': PointPillar,
@@ -45,9 +49,11 @@ __all__ = {
     'TransFusion': TransFusion,
     'BevFusion': BevFusion,
     'PVRCNNRelation': PVRCNNRelation,
+    'PVRCNNRelation_Mamba': PVRCNNRelation_Mamba,
     'PVRCNNPlusPlusRelation': PVRCNNPlusPlusRelation,
     'CenterPointTwoStage': CenterPointTwoStage,
     'PartA2NetRelation': PartA2NetRelation,
+    'PartA2NetRelationMamba': PartA2NetRelationMamba,
     'VoxelRCNNRelation': VoxelRCNNRelation,
 }
 

@@ -132,8 +132,8 @@ class VoxelSetAbstraction(nn.Module):
                  num_rawpoint_features=None, **kwargs):
         super().__init__()
         self.model_cfg = model_cfg
-        self.voxel_size = voxel_size  # [x, y, z] = [0.5, 0.5, 0.1]
-        self.point_cloud_range = point_cloud_range  # [x1, y1, z1, x2, y2, z2] = [0, -40, -3, 70.4, 40, 1]
+        self.voxel_size = voxel_size  # [x, y, z] = pvrcnn[0.05, 0.05, 0.1]
+        self.point_cloud_range = point_cloud_range  # [x1, y1, z1, x2, y2, z2] = pvrcnn[0, -40, -3, 70.4, 40, 1]
 
         SA_cfg = self.model_cfg.SA_LAYER
 
@@ -357,6 +357,9 @@ class VoxelSetAbstraction(nn.Module):
             point_coords: (N, 4)
 
         """
+        batch_dict['point_cloud_range'] = self.point_cloud_range
+        batch_dict['voxel_size'] = self.voxel_size
+        
         keypoints = self.get_sampled_points(batch_dict)
 
         point_features_list = []

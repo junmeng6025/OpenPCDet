@@ -1,6 +1,7 @@
 from functools import partial
 
 import torch.nn as nn
+import torch
 
 from ...utils.spconv_utils import replace_feature, spconv
 
@@ -132,12 +133,19 @@ class VoxelBackBone8x(nn.Module):
             batch_dict:
                 batch_size: int
                 vfe_features: (num_voxels, C)
-                voxel_coords: (num_voxels, 4), [batch_idx, z_idx, y_idx, x_idx]
+                voxel_coords: (num_voxels, 4), [batch_idx, z_idx, x_idx, y_idx]
         Returns:
             batch_dict:
                 encoded_spconv_tensor: sparse tensor
         """
         voxel_features, voxel_coords = batch_dict['voxel_features'], batch_dict['voxel_coords']  # (3200, 4); (3200, 4)
+
+        #DEBUG
+        # print("x voxel: %d ~ %d"%(torch.min(voxel_coords[:, 2]), torch.max(voxel_coords[:, 2])))   
+        # print("y voxel: %d ~ %d"%(torch.min(voxel_coords[:, 3]), torch.max(voxel_coords[:, 3])))
+        # print("z voxel: %d ~ %d"%(torch.min(voxel_coords[:, 1]), torch.max(voxel_coords[:, 1])))
+
+
         batch_size = batch_dict['batch_size']
         input_sp_tensor = spconv.SparseConvTensor(
             features=voxel_features,
