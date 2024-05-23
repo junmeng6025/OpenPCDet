@@ -11,6 +11,7 @@ from .second_net import SECONDNet
 from .second_net_iou import SECONDNetIoU
 from .caddn import CaDDN
 from .voxel_rcnn import VoxelRCNN
+from .voxel_rcnn_mamba import VoxelRCNN_Mamba
 from .centerpoint import CenterPoint
 from .pv_rcnn_plusplus import PVRCNNPlusPlus
 from .mppnet import MPPNet
@@ -55,6 +56,7 @@ __all__ = {
     'PartA2NetRelation': PartA2NetRelation,
     'PartA2NetRelationMamba': PartA2NetRelationMamba,
     'VoxelRCNNRelation': VoxelRCNNRelation,
+    'VoxelRCNN_Mamba': VoxelRCNN_Mamba,
 }
 
 
