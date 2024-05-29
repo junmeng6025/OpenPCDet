@@ -217,11 +217,11 @@ MODEL:
             NAME: knn_graph,
             K: 16,
             CONNECT_ONLY_SAME_CLASS: False,
-            SPACE: Instance,
+            SPACE: R3,
             # EDGE_EMBEDDING: True,
         }
-        # LAYERS: [256, 256, 256, 256]
-        LAYERS: [384, 384, 384, 384]
+        LAYERS: [256, 256, 256, 256]
+        # LAYERS: [384, 384, 384, 384]
         SKIP_CONNECTION: True
         # IN_BETWEEN_MLP: [256, 256, 256, 256]
         IN_BETWEEN_MLP: False
