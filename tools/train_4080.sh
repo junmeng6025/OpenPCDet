@@ -50,3 +50,7 @@ echo "[Train] Starting train.py ... Using cfg $CFG04"
 CKPT04="/root/OpenPCDet/output/waymo_models/PartA2_relation_mamba/train_mamba_waymo_bs2/20240527-030544/ckpt/checkpoint_epoch_19.pth"
 python train.py --cfg_file ${CFG04} --extra_tag ${TAG} --ckpt ${CKPT04} --date_tag "20240527-030544"
 
+echo "[Train] Starting train.py ... Using cfg $CFG07"
+
+echo "[Train] Starting train.py ... Using cfg $CFG08"
+

@@ -67,6 +67,17 @@
             ]
         },
         {
+            "name": "WaymoDataset",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "preLaunchTask": "Change working directory",
+            "cwd": "/root/OpenPCDet/pcdet/datasets/kitti",
+            // "args": ["--cfg_file", "./cfgs/waymo_models/pv_rcnn.yaml", "--ckpt", "../output/cfgs/waymo_models/pv_rcnn/default/ckpt/latest_model.pth", "--data_path", "../data/waymo/waymo_processed_data_v0_5_0/segment-15832924468527961_1564_160_1584_160_with_camera_labels/0000.npy", "--ext", ".npy"]
+        },
+        {
             "name": "Kitti Demo",
             "type": "python",
             "request": "launch",

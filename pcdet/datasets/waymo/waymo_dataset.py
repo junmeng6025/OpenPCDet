@@ -701,12 +701,13 @@ class WaymoDataset(DatasetTemplate):
 
 def create_waymo_infos(dataset_cfg, class_names, data_path, save_path,
                        raw_data_tag='raw_data', processed_data_tag='waymo_processed_data',
-                       workers=min(16, multiprocessing.cpu_count()), update_info_only=False):
+                       workers=min(4, multiprocessing.cpu_count()), update_info_only=False):  # ori: min 16
     dataset = WaymoDataset(
         dataset_cfg=dataset_cfg, class_names=class_names, root_path=data_path,
         training=False, logger=common_utils.create_logger()
     )
-    train_split, val_split = 'train', 'val'
+    # train_split, val_split = 'train', 'val'
+    train_split, val_split = 'train_mini', 'val_mini'
 
     train_filename = save_path / ('%s_infos_%s.pkl' % (processed_data_tag, train_split))
     val_filename = save_path / ('%s_infos_%s.pkl' % (processed_data_tag, val_split))
@@ -745,7 +746,7 @@ def create_waymo_infos(dataset_cfg, class_names, data_path, save_path,
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     dataset.set_split(train_split)
     dataset.create_groundtruth_database(
-        info_path=train_filename, save_path=save_path, split='train', sampled_interval=1,
+        info_path=train_filename, save_path=save_path, split=train_split, sampled_interval=1,
         used_classes=['Vehicle', 'Pedestrian', 'Cyclist'], processed_data_tag=processed_data_tag
     )
     print('---------------Data preparation Done---------------')
@@ -758,21 +759,34 @@ def create_waymo_gt_database(
         dataset_cfg=dataset_cfg, class_names=class_names, root_path=data_path,
         training=False, logger=common_utils.create_logger()
     )
-    train_split = 'train'
+    # train_split = 'train'
+    train_split = 'train_mini'
     train_filename = save_path / ('%s_infos_%s.pkl' % (processed_data_tag, train_split))
 
     print('---------------Start create groundtruth database for data augmentation---------------')
     dataset.set_split(train_split)
 
+    # if use_parallel:
+    #     dataset.create_groundtruth_database_parallel(
+    #         info_path=train_filename, save_path=save_path, split='train', sampled_interval=1,
+    #         used_classes=['Vehicle', 'Pedestrian', 'Cyclist'], processed_data_tag=processed_data_tag,
+    #         num_workers=workers, crop_gt_with_tail=crop_gt_with_tail
+    #     )
+    # else:
+    #     dataset.create_groundtruth_database(
+    #         info_path=train_filename, save_path=save_path, split='train', sampled_interval=1,
+    #         used_classes=['Vehicle', 'Pedestrian', 'Cyclist'], processed_data_tag=processed_data_tag
+    #     )
+    # print('---------------Data preparation Done---------------')
     if use_parallel:
         dataset.create_groundtruth_database_parallel(
-            info_path=train_filename, save_path=save_path, split='train', sampled_interval=1,
+            info_path=train_filename, save_path=save_path, split=train_split, sampled_interval=1,
             used_classes=['Vehicle', 'Pedestrian', 'Cyclist'], processed_data_tag=processed_data_tag,
             num_workers=workers, crop_gt_with_tail=crop_gt_with_tail
         )
     else:
         dataset.create_groundtruth_database(
-            info_path=train_filename, save_path=save_path, split='train', sampled_interval=1,
+            info_path=train_filename, save_path=save_path, split=train_split, sampled_interval=1,
             used_classes=['Vehicle', 'Pedestrian', 'Cyclist'], processed_data_tag=processed_data_tag
         )
     print('---------------Data preparation Done---------------')
@@ -784,9 +798,10 @@ if __name__ == '__main__':
     from easydict import EasyDict
 
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default=None, help='specify the config of dataset')
+    parser.add_argument('--cfg_file', type=str, default="tools/cfgs/dataset_configs/waymo_dataset_mini.yaml", help='specify the config of dataset')
     parser.add_argument('--func', type=str, default='create_waymo_infos', help='')
-    parser.add_argument('--processed_data_tag', type=str, default='waymo_processed_data_v0_5_0', help='')
+    # parser.add_argument('--processed_data_tag', type=str, default='waymo_processed_data_v0_5_0', help='')
+    parser.add_argument('--processed_data_tag', type=str, default='waymo_processed_data_mini', help='')
     parser.add_argument('--update_info_only', action='store_true', default=False, help='')
     parser.add_argument('--use_parallel', action='store_true', default=False, help='')
     parser.add_argument('--wo_crop_gt_with_tail', action='store_true', default=False, help='')
